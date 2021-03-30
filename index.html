@@ -361,12 +361,12 @@
             <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a>我们分享了移动应用遗留系统常见的问题。那么好的实践或者架构设计是怎样的呢？</p>
 <p>这一篇我们将整理业内优秀的移动应用架构设计，包含微信、淘宝、支付宝以及美团外卖。其中的部分产品也经历过遗留系统的重构改造，具有非常好的参考意义。 </p>
 <h1 id="优秀实践"><a href="#优秀实践" class="headerlink" title="优秀实践"></a>优秀实践</h1><h2 id="微信"><a href="#微信" class="headerlink" title="微信"></a>微信</h2><p>从微信对外分享的架构演进文章中可知，微信应用其实也是经历了从大单体到模块化的演进。</p>
-<p><img src="http://mmbiz.qpic.cn/mmbiz_png/csvJ6rH9McsEtkaaicsI8wgxa1JYjMPgKz5gFjxTiapophUJeYD98poQpWGNrGibIGhSP8NC6LdNCKYicT0bS2NHyg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/268ddddfad6e430db81c0c91d7982116~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <blockquote>
 <p>图片来源 <a href="https://mp.weixin.qq.com/s/6Q818XA5FaHd7jJMFBG60w" target="_blank" rel="noopener">微信Android模块化架构重构实践</a></p>
 </blockquote>
 <p>我们看下介绍中后续改造后的架构设计。</p>
-<p><img src="http://mmbiz.qpic.cn/mmbiz_png/csvJ6rH9McsEtkaaicsI8wgxa1JYjMPgK2omuXpGOJ8yD05C2bbic5owSH2wJUF825St9fNYvv6x6loLErlcebbA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/89aa2b911e0c424da5daeb1723b1a465~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <blockquote>
 <p>图片来源 <a href="https://mp.weixin.qq.com/s/6Q818XA5FaHd7jJMFBG60w" target="_blank" rel="noopener">微信Android模块化架构重构实践</a></p>
 </blockquote>
@@ -384,9 +384,9 @@
 </ol>
 <p>更多信息可阅读原文，<a href="https://mp.weixin.qq.com/s/6Q818XA5FaHd7jJMFBG60w" target="_blank" rel="noopener">微信Android模块化架构重构实践</a></p>
 <h2 id="手淘"><a href="#手淘" class="headerlink" title="手淘"></a>手淘</h2><p>从手机淘宝客户端架构探索实践的分享中介绍到手机淘宝从1.0用单工程编写开始，东西非常简陋；到2.0为索引许多三方库的庞大的单工程；再到3.0打破了单工程开发模式实现业务复用。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEBa60c3f8b5401dd344641ea18d0d73d36?method=download&amp;shareKey=a9de73f5f3048d799300f46c71f228e9" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1d4a21eaed824140924a41b49f310b04~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <blockquote>
-<p>图片来源<br><a href="https://yq.aliyun.com/articles/129" target="_blank" rel="noopener">手机淘宝客户端架构探索实践</a></p>
+<p>图片来源 <a href="https://yq.aliyun.com/articles/129" target="_blank" rel="noopener">手机淘宝客户端架构探索实践</a></p>
 </blockquote>
 <p>淘宝架构主要分为四层，最上层是组件Bundle(业务组件)，往下是容器(核心层)，中间件Bundle(功能封装)，基础库Bundle(底层库)。 </p>
 <p>文章提到架构演化的一些优点及变化很值得深思。</p>
@@ -396,9 +396,9 @@
 <li>敏捷开发，快速试错</li>
 </ol>
 <h2 id="支付宝"><a href="#支付宝" class="headerlink" title="支付宝"></a>支付宝</h2><p>在支付宝mPass实践讨论分析一文中，提到支付宝客户端的总体架构图如下。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3dacdc86f1330078709b092b754ce8d1?method=download&amp;shareKey=118d29ad212fe2a3089a917af9b2f9dc" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0b356a0929a04d22bc3fc0a9fc868303~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <blockquote>
-<p>图片来源<br><a href="https://mp.weixin.qq.com/s?__biz=MzUyMDk2MzUzMQ==&amp;mid=2247483672&amp;idx=1&amp;sn=249447e402bd41e455f3990d210d9c03&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">开篇 | 模块化与解耦式开发在蚂蚁金服 mPaaS 深度实践探讨</a></p>
+<p>图片来源 <a href="https://mp.weixin.qq.com/s?__biz=MzUyMDk2MzUzMQ==&amp;mid=2247483672&amp;idx=1&amp;sn=249447e402bd41e455f3990d210d9c03&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">开篇 | 模块化与解耦式开发在蚂蚁金服 mPaaS 深度实践探讨</a></p>
 </blockquote>
 <p>分享文章中介绍到5层架构设计如下：</p>
 <ul>
@@ -417,9 +417,9 @@
 <p>在支付宝的架构里，编译参与的部分是和运行期参与的部分是分离的：编译期使用 bundle  的接口包，运行期使用 bundle 包本身。bundle 的接口包是 bundle 包的一部分，即刚才说的 bundle 的代码部分。bundle 的资源包同时打进接口包，在编译期提供给另一个 bundle 引用。</p>
 <p>更多信息可阅读原文，<a href="https://mp.weixin.qq.com/s?__biz=MzUyMDk2MzUzMQ==&amp;mid=2247483672&amp;idx=1&amp;sn=249447e402bd41e455f3990d210d9c03&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">开篇 | 模块化与解耦式开发在蚂蚁金服 mPaaS 深度实践探讨</a></p>
 <h2 id="美团"><a href="#美团" class="headerlink" title="美团"></a>美团</h2><p>最后看另外一个跨平台技术架构相关的分享，在外卖客户端容器化架构的演进分享中提到了美团外包的整体架构如下。</p>
-<p><img src="https://p0.meituan.net/travelcube/b145dba75e4687b23302add1439d2364423893.png@1582w_992h_80q" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9bbefe79b121441eaccd2d13b038a10c~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <blockquote>
-<p>图片来源<br><a href="https://tech.meituan.com/2020/09/30/waimai-mobile-architecture-evolution.html" target="_blank" rel="noopener">外卖客户端容器化架构的演进</a></p>
+<p>图片来源 <a href="https://tech.meituan.com/2020/09/30/waimai-mobile-architecture-evolution.html" target="_blank" rel="noopener">外卖客户端容器化架构的演进</a></p>
 </blockquote>
 <p>特别的一点是是采用了容器化架构，根据业务场景及PV，支持多种容器技术。在文末的总结提到，容器化架构相对于传统的移动端架构而言，充分地利用了现在的跨端技术，将动态化的能力最大化的赋予业务。通过动态化，带来业务迭代周期缩短、编译的加速、开发效率的提升等好处。同时，也解决了面临着的多端复用、平台能力、平台支撑、单页面多业务团队、业务动态诉求强等业务问题。但对线上的可用性、容器的可用性、支撑业务的线上发布上提出了更加严格的要求。</p>
 <p>更多信息可阅读原文，<a href="https://tech.meituan.com/2020/09/30/waimai-mobile-architecture-evolution.html" target="_blank" rel="noopener">外卖客户端容器化架构的演进</a></p>
@@ -446,7 +446,7 @@
 <li>业务模块独立发布</li>
 </ul>
 <p>结合这些特点及CloudDiks团队的业务，团队采用的架构设计如下。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&amp;shareKey=270446693f31a61502e5a8b460ebd557" alt=""></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/87df48f3c43149f7b54b4a23d58a7d78~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <p>下一篇，移动应用遗留系统重构（2）- 示例篇，我们将继续介绍CloudDisk的业务及团队问题，分析现有的代码。</p>
 <h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://mp.weixin.qq.com/s/6Q818XA5FaHd7jJMFBG60w" target="_blank" rel="noopener">微信Android模块化架构重构实践</a></p>
 <p><a href="https://yq.aliyun.com/articles/129" target="_blank" rel="noopener">手机淘宝客户端架构探索实践</a></p>
@@ -456,7 +456,7 @@
 <p><a href="https://mp.weixin.qq.com/s?__biz=MzUyMDk2MzUzMQ==&amp;mid=2247483672&amp;idx=1&amp;sn=249447e402bd41e455f3990d210d9c03&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">开篇 | 模块化与解耦式开发在蚂蚁金服 mPaaS 深度实践探讨</a></p>
 <p><a href="https://tech.meituan.com/2020/09/30/waimai-mobile-architecture-evolution.html" target="_blank" rel="noopener">外卖客户端容器化架构的演进</a></p>
 <h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
-<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/21a9b0cf68a0424f960aaf9a28ed3407~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
 <ul>
 <li>作者：黄俊彬 </li>
