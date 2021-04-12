@@ -271,6 +271,190 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/" itemprop="url">
+                  移动应用遗留系统重构（4）-分析篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-12T09:15:58+08:00">
+                2021-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/04/12/移动应用遗留系统重构（4）-分析篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a>我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。</p>
+<p>接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。</p>
+<h1 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h1><p>我们先回忆一下<a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">架构篇</a>里团队采用的架构设计。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&amp;shareKey=270446693f31a61502e5a8b460ebd557" alt=""></p>
+<ol>
+<li>代码复用</li>
+</ol>
+<ul>
+<li>公共能力复用，有一层专门统一管理应用公用的基础能力，如图片、网络、存储能力、安全等</li>
+<li>公用业务能力复用，有一层专门统一管理应用的业务通用组件，如分享、推送、登录等</li>
+</ul>
+<ol start="2">
+<li>低耦合</li>
+</ol>
+<ul>
+<li>业务模块间通过API方式依赖，不依赖具体的模块实现</li>
+<li>依赖方向清晰，上层模块依赖下层模块</li>
+</ul>
+<ol start="3">
+<li>并行研发</li>
+</ol>
+<ul>
+<li>业务模块支持独立编译调试</li>
+<li>业务模块独立发布</li>
+</ul>
+<p>结合该4层架构、已有的代码，以及业务的后续演化，团队设计的新架构如下</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB270d321fd2812757fb2a5c400ce44aaa?method=download&amp;shareKey=dac1353f74361be1c7a25bcc2b83924c" alt=""></p>
+<h1 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h1><h2 id="ArchUnit"><a href="#ArchUnit" class="headerlink" title="ArchUnit"></a><a href="https://www.archunit.org/" target="_blank" rel="noopener">ArchUnit</a></h2><p>有了架构设计后，我们就能识别代码的边界，这里我们可以通过<a href="https://www.archunit.org/" target="_blank" rel="noopener">Archunit</a>进行边界约束描述。我们可以得到2条通用的守护规则。</p>
+<ol>
+<li>垂直方向，下层模块不能反向依赖上层</li>
+<li>横向方向，组件之间不能存在相互的依赖</li>
+</ol>
+<p>转化为ArchUnit的测试用例如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@ArchTest</span><br><span class="line">  public static final ArchRule architecture_layer_should_has_right_dependency =layeredArchitecture()</span><br><span class="line">          .layer(&quot;Library&quot;).definedBy(&quot;..cloud.disk.library..&quot;)</span><br><span class="line">          .layer(&quot;PlatForm&quot;).definedBy(&quot;..cloud.disk.platform..&quot;)</span><br><span class="line">          .layer(&quot;FileBundle&quot;).definedBy(&quot;..cloud.disk.bundle.file..&quot;)</span><br><span class="line">          .layer(&quot;DynamicBundle&quot;).definedBy(&quot;..cloud.disk.bundle.dynamic..&quot;)</span><br><span class="line">          .layer(&quot;UserBundle&quot;).definedBy(&quot;..cloud.disk.bundle.user..&quot;)</span><br><span class="line">          .layer(&quot;AllBundle&quot;).definedBy(&quot;..cloud.disk.bundle..&quot;)</span><br><span class="line">          .layer(&quot;App&quot;).definedBy(&quot;..cloud.disk.app..&quot;)</span><br><span class="line">          .whereLayer(&quot;App&quot;).mayOnlyBeAccessedByLayers()</span><br><span class="line">          .whereLayer(&quot;FileBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;DynamicBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;UserBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;PlatForm&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;)</span><br><span class="line">          .whereLayer(&quot;Library&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;,&quot;PlatForm&quot;);</span><br></pre></td></tr></table></figure>
+<p>当然这个用例的执行是失败的，因为我们基本的包结构还没有调整。但有了架构守护测试用例，我们就可以逐步把代码移动到对应的Package中，直到守护用例运行通过为止。</p>
+<p>接下来我们先运用IDE工具进行基础的包结构调整，调整后的结构如下</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB8093cefa8193b5b2b4b742c2df9b69bb?method=download&amp;shareKey=c32140212500ae26a81515fb1f47cc60" alt=""></p>
+<p>调整后运行ArchUnit测试运行结果如下<br><img src="https://note.youdao.com/yws/api/personal/file/WEB23ae4fbe7c0dfd61162d0afe376f6fb0?method=download&amp;shareKey=134752c0755c0077b36defb768d2a0a6" alt=""></p>
+<p>这些异常的提示就是我们需要处理的异常依赖。但是ArchUnit的这个提示比较不不友好，接下来我们介绍另外一种分析异常依赖的方式，使用Intellij Dependencies 。</p>
+<h2 id="Intellij-Dependencies"><a href="#Intellij-Dependencies" class="headerlink" title="Intellij Dependencies"></a>Intellij Dependencies</h2><p>我们选择对应的Package，选择Analyze菜单，点击Dependencies，可以找出该Package所依赖的相关类。<br><img src="https://note.youdao.com/yws/api/personal/file/WEBb2f138f8d771e56adc8dbb7a1b3f3d40?method=download&amp;shareKey=475fead51386ad6d916418b498772dbe" alt=""></p>
+<p>我们选择dynamic Package进行分析后，发现根据现有的架构约束，存在横向的Bundle依赖需要进行解除依赖。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB90b534d55160794d08d34cf248087e0b?method=download&amp;shareKey=1f4dd8f2a0b67e166ebfc11708e2f98c" alt=""></p>
+<p>我是在实际重构过程中，我们可以频繁借助该功能验证耦合解除情况，并且同时通过ArchUnit测试做好守护。</p>
+<p><strong>详细代码见<a href="https://github.com/junbin1011/CloudDisk/commit/d4b81762177b3a5e38d9d622170786540bcc7478" target="_blank" rel="noopener">Cloud Disk</a></strong></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>我一篇我们分享了如何借助工具进行异常依赖的分析。当我们有了未来的架构设计后，可以借助ArchUnit进行架构测试守护，通过Intellij的Dependendencies 我们可以方便以Package或者Class为单位进行依赖分析。</p>
+<p>当我们已经分析出需要处理的异常依赖，接下来我们就可以逐步进行重构。下一篇，我们将给大家分享实践总结的一些重构套路，移动应用遗留系统重构（5）- 重构方法篇。</p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
+<ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/06/移动应用遗留系统重构（3）-示例篇/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2721,173 +2905,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2019/04/24/如何高效完成项目交付/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/04/24/如何高效完成项目交付/" itemprop="url">
-                  如何高效完成项目交付
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-24T21:54:44+08:00">
-                2019-04-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2019/04/24/如何高效完成项目交付/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/04/24/如何高效完成项目交付/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近996很火，但抛开企业的强制性文化外，是否还有其他的各种因素导致我们效率低下。我们能如何去提高编程的效率，如何有效去规避项目中的风险，使得项目的迭代计划能正常的执行，项目能按期交付。</p>
-<p>下面先谈谈几个关于项目交付的问题。</p>
-<p>1、如何量化评判编程是否高效？</p>
-<p>2、在项目开展过程中，是否遇到非技术或自身的原因，导致效率低下？</p>
-<p>3、是否曾经因为自身的原因导致项目拖延，你将会怎么样进行调整？</p>
-<p>4、你有什么项目中的实践经验，使得效率更高呢？</p>
-<p>下面将谈谈自己的一些经验及总结。欢迎大家有兴趣一起探讨。</p>
-<h1 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h1><p><img src="http://upload-images.jianshu.io/upload_images/5125122-f19017f2b632a952?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
-<h2 id="1、评判标准"><a href="#1、评判标准" class="headerlink" title="1、评判标准"></a>1、评判标准</h2><p>为什么首先谈评判标准，是因为这个是衡量的基准。如何去衡量编程工作是否高效，相信不同的公司有不同的方法，但通常都没有办法达到可量化。往往是通过个人的经验评判，或者是横向的对比，从而去进行一个评定。</p>
-<p>当然如果公司有完善的考核标准是最好不过。但是在没有的情况下，通常项目都会有一个大的时间范围及节点。我们需要保障自己的工作不会影响到整体的项目进度。</p>
-<h2 id="2、外部因素"><a href="#2、外部因素" class="headerlink" title="2、外部因素"></a>2、外部因素</h2><p>相信很多做技术的同学通常抱怨都是技术外的因素导致项目不能如期进行。例如需求变更（通常还不会给加时间）、沟通层级复杂、项目需求估点不按常理出牌等等。各种各样的外部因素，最终导致项目不能如期正常交付，但最后往往都是研发的同学要背锅。总结一下，通常有如下几种情况：</p>
-<p>1、需求问题 （无边际、频繁变更）</p>
-<p>2、沟通问题（没有统一高效的沟通渠道）</p>
-<p>3、管理问题 （没有规范的流程，明确的分工，详细的迭代计划）</p>
-<h2 id="3、自身因素"><a href="#3、自身因素" class="headerlink" title="3、自身因素"></a>3、自身因素</h2><p>由于自身的因素导致项目延期也非常常见。对于业务需求没有深刻的理解导致返工、缺乏主动的沟通、整体的时间规划、良好的编码规范（后期fix问题占用需求开发时间）等等。都会是导致效率低下、项目延期交付的诱因。总结一下，通常有如下几种情况：</p>
-<p>1、缺乏全局思维，考虑问题不够全面，不能预期风险</p>
-<p>2、缺乏积极主动的沟通，埋头苦干</p>
-<p>3、缺乏良好的时间规划及自我管理能力</p>
-<p>4、缺乏良好的编码规范及架构设计、组件设计能力</p>
-<h1 id="经验总结"><a href="#经验总结" class="headerlink" title="经验总结"></a>经验总结</h1><p><img src="http://upload-images.jianshu.io/upload_images/5125122-c16a6f03503b2c9b?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
-<h2 id="时间规划"><a href="#时间规划" class="headerlink" title="时间规划"></a>时间规划</h2><p>1、工作的8小时中保持专注</p>
-<p>保持工作时间的专注，这是基础，但往往又很难。特别是各种会议、邮件、聊天软件消息，往往会打断你。我们需要尽量控制自己专注，减少外部因素的干扰。</p>
-<p>2、充分理解项目需求，对齐目标愿景</p>
-<p>清晰的目标及与需求方对齐目标信息，这点尤为重要。可以有效避免在一开始就走错路，导致返工。同时需要从技术的角度进行整体的规划评估，那些是技术难点需要预研（往往给时间也不一定能完成）、那些是需要大量的劳动力投入。</p>
-<p>3、充分的利用边角时间</p>
-<p>有些技术方案往往是需要时间去思考，充分利用边角时间（例如地铁时间、吃饭间隙时间等）进行一些思考，往往可能有意向不到的收获。</p>
-<p>4、制定详细的计划</p>
-<p>我始终相信要达到目标，一定要有详细的可执行计划。在项目开展的过程中，应尽可能避免没有时间节点概念，甚至出现干到那是那得情况。尽可能将目标分解，形成月、周、天的计划。</p>
-<p> 5、保持风险意识</p>
-<p>前面说到的需要对技术有整体的评估，这其实也是风险意识的一种体现。我们需要评估那些是技术难点、那些是需要劳动力投入。在项目前期尽可能提出来，从技术或业务上尽可能避免入坑。</p>
-<h2 id="沟通能力"><a href="#沟通能力" class="headerlink" title="沟通能力"></a>沟通能力</h2><p>1、及时有效的沟通</p>
-<p>项目往往在推进的过程中，会有各种各样的因素产生变化。所以及时有效的沟通这点应该伴随整个项目的周期。</p>
-<p>2、统一的沟通通道</p>
-<p>保持统一的沟通通道能有效避免信息不对称，减少不必要的沟通成本及信息错误，及时有效的同步最新的信息。通常可采用站会、统一项目群组、实时同步协作平台等形式，及时保持信息的同步。</p>
-<h2 id="优秀编码能力"><a href="#优秀编码能力" class="headerlink" title="优秀编码能力"></a>优秀编码能力</h2><p>1、良好的编程习惯</p>
-<p>在团队开发，良好的编程习惯及统一的规范尤为重要，这可以避免很多不必要的沟通，减少沟通及后期维护的成本。</p>
-<p>2、良好的架构设计、组件设计</p>
-<p>保持代码可扩展性，让我们可以更从容应对需求的变化。组件化的设计能让我们的代码更易于复用，大大的提高产出。</p>
-<h1 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h1><p>这些年的经验，一个项目的成败，往往不是因为技术的原因，通常都是管理上出了问题。对于一个程序员，在保持优秀的编码能力外，还要重视项目上的软技能。提升沟通、风险意识、制定计划、自我管理等的能力。</p>
-<p>总结问题，制定计划。不断实践，不断超越自己！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2935,7 +2952,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">85</span>
+                <span class="site-state-item-count">86</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
