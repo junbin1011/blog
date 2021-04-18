@@ -87,26 +87,23 @@
 
 
 
-<meta name="description" content="前言上一篇移动应用遗留系统重构（3）-示例篇我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。 接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。">
+<meta name="description" content="前言上一篇移动应用遗留系统重构（4）-分析篇我们根据CloudDisk未来的架构，借助ArchUnit进行架构测试守护以及Intellij的Dependendencies分析出了按照未来的架构设计需要解决的异常依赖。 这一篇开始我们将分享进行依赖解除的重构流程、方法以及常用的工具使用。 重构流程12345671.识别一个内聚的包2.解除该包的异常依赖3.移动该包对应的代码及资源到新的模块4.包解耦">
 <meta name="keywords" content="遗留系统重构">
 <meta property="og:type" content="article">
-<meta property="og:title" content="移动应用遗留系统重构（4）-分析篇">
-<meta property="og:url" content="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/index.html">
+<meta property="og:title" content="移动应用遗留系统重构（5）- 重构方法篇">
+<meta property="og:url" content="https://junbin1011.github.io/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/index.html">
 <meta property="og:site_name" content="JunBin">
-<meta property="og:description" content="前言上一篇移动应用遗留系统重构（3）-示例篇我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。 接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。">
+<meta property="og:description" content="前言上一篇移动应用遗留系统重构（4）-分析篇我们根据CloudDisk未来的架构，借助ArchUnit进行架构测试守护以及Intellij的Dependendencies分析出了按照未来的架构设计需要解决的异常依赖。 这一篇开始我们将分享进行依赖解除的重构流程、方法以及常用的工具使用。 重构流程12345671.识别一个内聚的包2.解除该包的异常依赖3.移动该包对应的代码及资源到新的模块4.包解耦">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&shareKey=270446693f31a61502e5a8b460ebd557">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB270d321fd2812757fb2a5c400ce44aaa?method=download&shareKey=dac1353f74361be1c7a25bcc2b83924c">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB8093cefa8193b5b2b4b742c2df9b69bb?method=download&shareKey=c32140212500ae26a81515fb1f47cc60">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB23ae4fbe7c0dfd61162d0afe376f6fb0?method=download&shareKey=134752c0755c0077b36defb768d2a0a6">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBb2f138f8d771e56adc8dbb7a1b3f3d40?method=download&shareKey=475fead51386ad6d916418b498772dbe">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB90b534d55160794d08d34cf248087e0b?method=download&shareKey=1f4dd8f2a0b67e166ebfc11708e2f98c">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB5cdbae60ad06e48c162daea4c2ec67a0?method=download&shareKey=86221f4a888a290a536fae0cf8a5fdad">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBd6578433db455117f8b9317dfa0171c7?method=download&shareKey=999e7d9deab31cbd4562189c369a01a1">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB9e7ee54a39b6fa8e614b6b98b366270f?method=download&shareKey=6670722db39275f644012b7f0712c857">
 <meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
-<meta property="og:updated_time" content="2021-04-12T01:25:49.148Z">
+<meta property="og:updated_time" content="2021-04-18T00:56:13.161Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="移动应用遗留系统重构（4）-分析篇">
-<meta name="twitter:description" content="前言上一篇移动应用遗留系统重构（3）-示例篇我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。 接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。">
-<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&shareKey=270446693f31a61502e5a8b460ebd557">
+<meta name="twitter:title" content="移动应用遗留系统重构（5）- 重构方法篇">
+<meta name="twitter:description" content="前言上一篇移动应用遗留系统重构（4）-分析篇我们根据CloudDisk未来的架构，借助ArchUnit进行架构测试守护以及Intellij的Dependendencies分析出了按照未来的架构设计需要解决的异常依赖。 这一篇开始我们将分享进行依赖解除的重构流程、方法以及常用的工具使用。 重构流程12345671.识别一个内聚的包2.解除该包的异常依赖3.移动该包对应的代码及资源到新的模块4.包解耦">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB5cdbae60ad06e48c162daea4c2ec67a0?method=download&shareKey=86221f4a888a290a536fae0cf8a5fdad">
 
 
 
@@ -134,13 +131,13 @@
 
 
 
-  <link rel="canonical" href="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/">
+  <link rel="canonical" href="https://junbin1011.github.io/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/">
 
 
 
 
 
-  <title> 移动应用遗留系统重构（4）-分析篇 | JunBin </title>
+  <title> 移动应用遗留系统重构（5）- 重构方法篇 | JunBin </title>
 </head>
 
 <body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -279,7 +276,7 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="黄俊彬">
@@ -300,7 +297,7 @@
             
             
               
-                移动应用遗留系统重构（4）-分析篇
+                移动应用遗留系统重构（5）- 重构方法篇
               
             
           </h1>
@@ -315,8 +312,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-12T09:15:58+08:00">
-                2021-04-12
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-18T08:50:51+08:00">
+                2021-04-18
               </time>
             
 
@@ -334,8 +331,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/04/12/移动应用遗留系统重构（4）-分析篇/" itemprop="commentCount"></span>
+                <a href="/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/04/18/移动应用遗留系统重构（5）-重构方法篇/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -361,55 +358,107 @@
       
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a>我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。</p>
-<p>接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。</p>
-<h1 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h1><p>我们先回忆一下<a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">架构篇</a>里团队采用的架构设计。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&amp;shareKey=270446693f31a61502e5a8b460ebd557" alt=""></p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a>我们根据CloudDisk未来的架构，借助ArchUnit进行架构测试守护以及Intellij的Dependendencies分析出了按照未来的架构设计需要解决的异常依赖。</p>
+<p>这一篇开始我们将分享进行依赖解除的重构流程、方法以及常用的工具使用。</p>
+<h1 id="重构流程"><a href="#重构流程" class="headerlink" title="重构流程"></a>重构流程</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1.识别一个内聚的包</span><br><span class="line"></span><br><span class="line">2.解除该包的异常依赖</span><br><span class="line"></span><br><span class="line">3.移动该包对应的代码及资源到新的模块</span><br><span class="line"></span><br><span class="line">4.包解耦验收</span><br></pre></td></tr></table></figure>
+<h2 id="1-识别内聚的包"><a href="#1-识别内聚的包" class="headerlink" title="1.识别内聚的包"></a>1.识别内聚的包</h2><p>对于移动应用通常我们可以通过产品的业务划分进行领域的识别划分。例如CloudDisk这个产品的相对还是比较清晰，业务上主要分为文件、动态及个人中心。</p>
+<p>对于部分遗留系统来说，旧代码可能散落在不同的包下，或者原先的代码组织方式是以功能划分，而非业务划分。就像CloudDisk的代码一样，第一步我们得先把相关的业务代码组织到同一包下，这个阶段我们可以先不管是否存在异常依赖，因为只有先组织到一个内聚的包下才方便我们进行依赖分析及代码重构。</p>
+<h2 id="2-解除异常依赖"><a href="#2-解除异常依赖" class="headerlink" title="2.解除异常依赖"></a>2.解除异常依赖</h2><p>这里我们将介绍几种通用的依赖解除手法。包含下沉、接口提取、路由跳转。</p>
+<blockquote>
+<p>后续的演示篇会通过视频进行具体的操作演示</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>依赖解除手法</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>下沉</td>
+<td>原本类功能属于Library或者Platform的，直接下沉。例如LogUtil 或 DateUtil等</td>
+</tr>
+<tr>
+<td>接口提取</td>
+<td>适用于Bundle间有数据或者行为依赖。例如某个BundleA中的classA需要触发BundleB的某个业务行为</td>
+</tr>
+<tr>
+<td>路由跳转</td>
+<td>适用于UI页面间跳转。例如某个BundleA中的Activity1，需要跳转到BundleB的Activity2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>重构手法：</strong></p>
 <ol>
-<li>代码复用</li>
+<li><strong>类下沉</strong> </li>
 </ol>
 <ul>
-<li>公共能力复用，有一层专门统一管理应用公用的基础能力，如图片、网络、存储能力、安全等</li>
-<li>公用业务能力复用，有一层专门统一管理应用的业务通用组件，如分享、推送、登录等</li>
+<li>将<code>具体类</code>移动到适当的 Lib 模块中</li>
+<li>在调用模块增加对该 Lib 的依赖</li>
 </ul>
 <ol start="2">
-<li>低耦合</li>
+<li><strong>接口提取</strong><ul>
+<li>在适当的公用模块中创建空的<code>接口</code></li>
+<li>将调用具体页面类的跳转代码块所在的包中建立新的<code>实现类</code>实现该<code>接口</code></li>
+</ul>
+</li>
 </ol>
 <ul>
-<li>业务模块间通过API方式依赖，不依赖具体的模块实现</li>
-<li>依赖方向清晰，上层模块依赖下层模块</li>
+<li><p>(自动)将<code>调用代码块</code>通过 Extract method 提取成<code>新方法</code></p>
+<blockquote>
+<p>如已经是独立方法跳过此步</p>
+</blockquote>
+</li>
+<li><p>(自动)在原调用逻辑所属的类中增加<code>实现类</code>的<code>成员变量</code>作为<code>delegate</code></p>
+<blockquote>
+<p>需要预留 Inject 接口，建议采用 Constructor Inject，静态成员提供setter</p>
+</blockquote>
+</li>
+<li><p>(自动)将<code>新方法</code>调用转移到<code>delegate</code>中</p>
+<blockquote>
+<p>如果是静态方法先通过 Change Method Signature 将 delegate 作为参数传给该方法</p>
+</blockquote>
+</li>
+<li><p>(自动)将新方法 Pull up 到<code>接口</code>中</p>
+</li>
+<li>(自动)将<code>实现类</code>移动到壳程序中</li>
+<li>在壳程序中实现<code>实现类</code>的Inject</li>
 </ul>
 <ol start="3">
-<li>并行研发</li>
+<li><strong>路由跳转</strong></li>
 </ol>
 <ul>
-<li>业务模块支持独立编译调试</li>
-<li>业务模块独立发布</li>
+<li>在跳转类定义对应的映射Path</li>
+<li>在调用处使用对应的path进行跳转</li>
 </ul>
-<p>结合该4层架构、已有的代码，以及业务的后续演化，团队设计的新架构如下</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB270d321fd2812757fb2a5c400ce44aaa?method=download&amp;shareKey=dac1353f74361be1c7a25bcc2b83924c" alt=""></p>
-<h1 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h1><h2 id="ArchUnit"><a href="#ArchUnit" class="headerlink" title="ArchUnit"></a><a href="https://www.archunit.org/" target="_blank" rel="noopener">ArchUnit</a></h2><p>有了架构设计后，我们就能识别代码的边界，这里我们可以通过<a href="https://www.archunit.org/" target="_blank" rel="noopener">Archunit</a>进行边界约束描述。我们可以得到2条通用的守护规则。</p>
+<h2 id="3-移动代码及资源"><a href="#3-移动代码及资源" class="headerlink" title="3.移动代码及资源"></a>3.移动代码及资源</h2><p>当包的异常依赖全部解耦完后，就可以直接进行移动了。这里我们分享2中常用的代码移动方式。</p>
 <ol>
-<li>垂直方向，下层模块不能反向依赖上层</li>
-<li>横向方向，组件之间不能存在相互的依赖</li>
+<li><strong>Move</strong></li>
 </ol>
-<p>转化为ArchUnit的测试用例如下:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@ArchTest</span><br><span class="line">  public static final ArchRule architecture_layer_should_has_right_dependency =layeredArchitecture()</span><br><span class="line">          .layer(&quot;Library&quot;).definedBy(&quot;..cloud.disk.library..&quot;)</span><br><span class="line">          .layer(&quot;PlatForm&quot;).definedBy(&quot;..cloud.disk.platform..&quot;)</span><br><span class="line">          .layer(&quot;FileBundle&quot;).definedBy(&quot;..cloud.disk.bundle.file..&quot;)</span><br><span class="line">          .layer(&quot;DynamicBundle&quot;).definedBy(&quot;..cloud.disk.bundle.dynamic..&quot;)</span><br><span class="line">          .layer(&quot;UserBundle&quot;).definedBy(&quot;..cloud.disk.bundle.user..&quot;)</span><br><span class="line">          .layer(&quot;AllBundle&quot;).definedBy(&quot;..cloud.disk.bundle..&quot;)</span><br><span class="line">          .layer(&quot;App&quot;).definedBy(&quot;..cloud.disk.app..&quot;)</span><br><span class="line">          .whereLayer(&quot;App&quot;).mayOnlyBeAccessedByLayers()</span><br><span class="line">          .whereLayer(&quot;FileBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;DynamicBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;UserBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;PlatForm&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;)</span><br><span class="line">          .whereLayer(&quot;Library&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;,&quot;PlatForm&quot;);</span><br></pre></td></tr></table></figure>
-<p>当然这个用例的执行是失败的，因为我们基本的包结构还没有调整。但有了架构守护测试用例，我们就可以逐步把代码移动到对应的Package中，直到守护用例运行通过为止。</p>
-<p>接下来我们先运用IDE工具进行基础的包结构调整，调整后的结构如下</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB8093cefa8193b5b2b4b742c2df9b69bb?method=download&amp;shareKey=c32140212500ae26a81515fb1f47cc60" alt=""></p>
-<p>调整后运行ArchUnit测试运行结果如下<br><img src="https://note.youdao.com/yws/api/personal/file/WEB23ae4fbe7c0dfd61162d0afe376f6fb0?method=download&amp;shareKey=134752c0755c0077b36defb768d2a0a6" alt=""></p>
-<p>这些异常的提示就是我们需要处理的异常依赖。但是ArchUnit的这个提示比较不不友好，接下来我们介绍另外一种分析异常依赖的方式，使用Intellij Dependencies 。</p>
-<h2 id="Intellij-Dependencies"><a href="#Intellij-Dependencies" class="headerlink" title="Intellij Dependencies"></a>Intellij Dependencies</h2><p>我们选择对应的Package，选择Analyze菜单，点击Dependencies，可以找出该Package所依赖的相关类。<br><img src="https://note.youdao.com/yws/api/personal/file/WEBb2f138f8d771e56adc8dbb7a1b3f3d40?method=download&amp;shareKey=475fead51386ad6d916418b498772dbe" alt=""></p>
-<p>我们选择dynamic Package进行分析后，发现根据现有的架构约束，存在横向的Bundle依赖需要进行解除依赖。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB90b534d55160794d08d34cf248087e0b?method=download&amp;shareKey=1f4dd8f2a0b67e166ebfc11708e2f98c" alt=""></p>
-<p>我是在实际重构过程中，我们可以频繁借助该功能验证耦合解除情况，并且同时通过ArchUnit测试做好守护。</p>
-<p><strong>详细代码见<a href="https://github.com/junbin1011/CloudDisk/commit/d4b81762177b3a5e38d9d622170786540bcc7478" target="_blank" rel="noopener">Cloud Disk</a></strong></p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这一篇我们分享了如何借助工具进行异常依赖的分析。当我们有了未来的架构设计后，可以借助ArchUnit进行架构测试守护，通过Intellij的Dependendencies 我们可以方便以Package或者Class为单位进行依赖分析。</p>
-<p>当我们已经分析出需要处理的异常依赖，接下来我们就可以逐步进行重构。下一篇，我们将给大家分享实践总结的一些重构套路，移动应用遗留系统重构（5）- 重构方法篇。</p>
+<p>这种方式大家应该比较常用，选择一个File或者Directory,按下F6选择希望移动后的目录则可。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB5cdbae60ad06e48c162daea4c2ec67a0?method=download&amp;shareKey=86221f4a888a290a536fae0cf8a5fdad" alt=""></p>
+<p>但是这种方式会存在一个问题，就是被移动的类如果依赖了其他的类或者资源，移动后会出现依赖异常。</p>
+<p><strong>适用场景：移动的File或Directory没有其他的依赖</strong></p>
+<ol start="2">
+<li><strong>Modularize</strong></li>
+</ol>
+<p>Modularize能够分析出移动的File存在的相关依赖，并一起关联移动，很好解决Move的痛点，非常适用于跨Module的移动。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBd6578433db455117f8b9317dfa0171c7?method=download&amp;shareKey=999e7d9deab31cbd4562189c369a01a1" alt=""></p>
+<p>选择移动的Module后点击Preview。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB9e7ee54a39b6fa8e614b6b98b366270f?method=download&amp;shareKey=6670722db39275f644012b7f0712c857" alt=""></p>
+<p>这里注意，有一些划线的文件，那是因为这个文件同时被多处引用，如果跟随一起移动，那么其他的地方会报错。所以我们需要将划线的文件先移动至公用的合适位置。待Preview没有任何的文件划线时，就可以进行移动。</p>
+<h2 id="4-包解耦验收"><a href="#4-包解耦验收" class="headerlink" title="4.包解耦验收"></a>4.包解耦验收</h2><ul>
+<li>所有模块编译通过</li>
+<li>所有新增模块符合模块依赖规则</li>
+<li>通过架构守护测试</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这一篇我们分享了进行依赖解除的重构流程，主要为4个操作步骤，识别内聚包、解除依赖、移动、验收。同时也介绍了Intellij中非常好用的Modularize功能。接下来我们就可以开始动手进行代码重构，但此时我们又面临着另外一个问题，也是很多同学在做重构时经常担心的一个问题。<strong>重构时如何保证功能的正确性，不会修改出新问题。</strong></p>
+<p>下一篇移动应用遗留系统重构（6）- 测试篇，我们将分享对于单体移动应用遗留系统，如何制定测试策略及有效补充自动化测试，更好为重构保驾护航。</p>
 <h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
 <p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
 <p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
 <h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
 <h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
 <ul>
@@ -454,8 +503,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2021/04/06/移动应用遗留系统重构（3）-示例篇/" rel="next" title="移动应用遗留系统重构（3）-示例篇">
-                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（3）-示例篇
+              <a href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/" rel="next" title="移动应用遗留系统重构（4）-分析篇">
+                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（4）-分析篇
               </a>
             
           </div>
@@ -463,10 +512,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/" rel="prev" title="移动应用遗留系统重构（5）- 重构方法篇">
-                移动应用遗留系统重构（5）- 重构方法篇 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -492,7 +537,7 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2021/04/12/移动应用遗留系统重构（4）-分析篇/" data-title="移动应用遗留系统重构（4）-分析篇" data-url="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/">
+      <div class="ds-thread" data-thread-key="2021/04/18/移动应用遗留系统重构（5）-重构方法篇/" data-title="移动应用遗留系统重构（5）- 重构方法篇" data-url="https://junbin1011.github.io/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/">
       </div>
     
   </div>
@@ -607,7 +652,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#架构设计"><span class="nav-number">2.</span> <span class="nav-text">架构设计</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析工具"><span class="nav-number">3.</span> <span class="nav-text">分析工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ArchUnit"><span class="nav-number">3.1.</span> <span class="nav-text">ArchUnit</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Intellij-Dependencies"><span class="nav-number">3.2.</span> <span class="nav-text">Intellij Dependencies</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">5.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">6.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">7.</span> <span class="nav-text">关于</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重构流程"><span class="nav-number">2.</span> <span class="nav-text">重构流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-识别内聚的包"><span class="nav-number">2.1.</span> <span class="nav-text">1.识别内聚的包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-解除异常依赖"><span class="nav-number">2.2.</span> <span class="nav-text">2.解除异常依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-移动代码及资源"><span class="nav-number">2.3.</span> <span class="nav-text">3.移动代码及资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-包解耦验收"><span class="nav-number">2.4.</span> <span class="nav-text">4.包解耦验收</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">4.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">5.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">6.</span> <span class="nav-text">关于</span></a></li></ol></div>
             
 
           </div>
