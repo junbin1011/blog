@@ -271,6 +271,222 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/" itemprop="url">
+                  移动应用遗留系统重构（8）- 依赖注入篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-17T20:43:08+08:00">
+                2021-05-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)</a>我们对file包进行了重构，抽取了对应的UserState接口，但我们发现UserState接口的层层传递，我们需要手工维护好多的构造方法及对应的注入，这样非常不便于进行代码的管理及维护。同时随着解耦的接口越来越多，就会产生更多的样板代码，所以我们需要更好的方式进行统一的管理。</p>
+<p>这篇我们主要分为3个部分，第一部分是常见依赖注入方式，第二部分是业内优秀的依赖注入实践，最后我们将继续对CloudDisk进行依赖注入的重构。</p>
+<h1 id="依赖注入方式"><a href="#依赖注入方式" class="headerlink" title="依赖注入方式"></a>依赖注入方式</h1><h2 id="静态注入（在编译时连接依赖项的代码）"><a href="#静态注入（在编译时连接依赖项的代码）" class="headerlink" title="静态注入（在编译时连接依赖项的代码）"></a>静态注入（在编译时连接依赖项的代码）</h2><p>静态注入是最常用的方式，在类中依赖抽象，暴露接缝，在调用的地方进行实现的注入。常用的注入方式有2种。</p>
+<ol>
+<li><p>构造函数注入。您将某个类的依赖项传入其构造函数（上一篇的CloudDisk就是采用这种方式）。</p>
+</li>
+<li><p>字段注入（或 setter 注入）。某些 Android 框架类（如 Activity 和 Fragment）由系统实例化，因此无法进行构造函数注入。使用字段注入时，依赖项将在创建类后实例化</p>
+</li>
+</ol>
+<p>由于是编译时连接依赖项，所以编辑阶段会进行类型的检查。</p>
+<h2 id="动态注入-（在运行时连接依赖项）"><a href="#动态注入-（在运行时连接依赖项）" class="headerlink" title="动态注入 （在运行时连接依赖项）"></a>动态注入 （在运行时连接依赖项）</h2><p>动态注入最常见的方式就是通过反射的机制，在运行时进行注入。</p>
+<p>由于是运行时连接依赖项，所以编译阶段没有检查，且有反射带来的性能问题。但好处是灵活，如果有模块是动态加载的，利用这种方式处理起来更简单。</p>
+<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><table>
+<thead>
+<tr>
+<th>静态注入</th>
+<th>动态注入</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>类型安全，编译时检查</td>
+<td>运行时绑定，编译时没有依赖</td>
+</tr>
+<tr>
+<td>性能无损失</td>
+<td>有反射带来的性能损失</td>
+</tr>
+<tr>
+<td>较适合整包编译</td>
+<td>较适合模块动态加载场景</td>
+</tr>
+<tr>
+<td>开源实现多</td>
+<td>开源实现较少</td>
+</tr>
+</tbody>
+</table>
+<h1 id="业内优秀实践"><a href="#业内优秀实践" class="headerlink" title="业内优秀实践"></a>业内优秀实践</h1><p>前面提到适用手工的方式进行依赖注入的管理，是一项非常困难和有挑战的事情。所幸，业内已经有成熟的解决方案。这一章我们来看下业内优秀的实践。</p>
+<h2 id="hilt"><a href="#hilt" class="headerlink" title="hilt"></a><a href="https://developer.android.com/training/dependency-injection" target="_blank" rel="noopener">hilt</a></h2><p>Hilt 采用的是静态注入的方式，在依赖项注入库<a href="https://dagger.dev/" target="_blank" rel="noopener">Dagger</a> 的基础上构建而成，提供了一种将 Dagger 纳入 Android 应用的标准方法。</p>
+<p>详细的介绍及使用大家可以查看官方的介绍说明</p>
+<p><a href="https://developer.android.com/training/dependency-injection/hilt-android" target="_blank" rel="noopener">https://developer.android.com/training/dependency-injection/hilt-android</a></p>
+<p>这里我们重点分享几点这个库的一些优点。</p>
+<ol>
+<li>相比Dragger，使用其实更简单</li>
+<li>IDE支持链接跳转，开发体验好</li>
+<li>完整的测试套件，方便进行自动化测试编写</li>
+<li>Jetpack生态组件，生态链完整，社区活跃度搞</li>
+</ol>
+<h2 id="koin"><a href="#koin" class="headerlink" title="koin"></a><a href="https://insert-koin.io/" target="_blank" rel="noopener">koin</a></h2><p>Koin 是一个用于 Kotlin 的实用型轻量级依赖注入框架，采用纯 Kotlin 编写而成，仅使用功能解析，无代理、无代码生成、无反射。</p>
+<p>详细的介绍及使用同样大家可以查看官方的介绍说明</p>
+<p><a href="https://insert-koin.io/docs/quickstart/kotlin" target="_blank" rel="noopener">https://insert-koin.io/docs/quickstart/kotlin</a></p>
+<p>这里我们同样分享几点这个库的一些优点。</p>
+<ol>
+<li>使用简单，没有复杂的注解</li>
+<li>更轻量，相比hilt编译时间更快、生成代码更少</li>
+</ol>
+<p>当然，由于koin本身是用kotlin语言编写的，所以最好项目也是使用kotlin编写。相比hilt，没有那么细的生命周期管理以及IDE的支持，并且也没有Jetpack的生态丰富。</p>
+<h1 id="CloudDisk依赖注入重构示例"><a href="#CloudDisk依赖注入重构示例" class="headerlink" title="CloudDisk依赖注入重构示例"></a>CloudDisk依赖注入重构示例</h1><p>前面我们分享了业内一些优秀的依赖注入实践，由于CloudDisk是采用java语言开发，且考虑后续会往JetPack生态迁移，所以决定采用Hilt的方案。</p>
+<p>具体的Hilt改造过程我们就不演示，<a href="https://developer.android.com/training/dependency-injection/hilt-android" target="_blank" rel="noopener">参考官网的文档</a>进行操作则可。这里我们对比一下改造前后的代码片段。</p>
+<p>具体的代码：<a href="https://github.com/junbin1011/CloudDisk/commit/5a0cbec49216c7ab43e88a2ebbed51f549f90cfd" target="_blank" rel="noopener">github链接</a></p>
+<p>使用手工注入：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class FileFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    FileController fileController;</span><br><span class="line"></span><br><span class="line">    public FileFragment(UserState userState) &#123;</span><br><span class="line">        fileController = new FileController(userState);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static FileFragment newInstance(UserState userState) &#123;</span><br><span class="line">        FileFragment fragment = new FileFragment(userState);</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用Hilt注入：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@AndroidEntryPoint</span><br><span class="line">public class FileFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    FileController fileController;</span><br><span class="line"></span><br><span class="line">    public static FileFragment newInstance() &#123;</span><br><span class="line">        FileFragment fragment = new FileFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>Hilt本质上通过注解及gradle插件，在编译时生成代码及注入到我们的类中。使用框架帮我们减少了很多模板代码，统一配置管理。</p>
+</blockquote>
+<p>这里注意，测试代码也需要做相应的配置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4.class)</span><br><span class="line">@LargeTest</span><br><span class="line">@HiltAndroidTest</span><br><span class="line">@Config(application = HiltTestApplication.class)</span><br><span class="line">public class SmokeTesting &#123;</span><br><span class="line">    @Rule</span><br><span class="line">    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本章我们介绍了常见的依赖注入方式及业内优秀的实践，同时我们也将CloudDisk进行了改造，使用Hilt统一管理注入。通过IDE的依赖分析我们可以发现，App依赖了fileBundle的Fragment，UI上存在编译的依赖。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB2edad8a59550acde5eea949d50cf8473?method=download&amp;shareKey=1b45b7b5c8e0a566f5f419d70654a673" alt=""></p>
+<p>下一篇，移动应用遗留系统重构（9）- 路由篇，我们将分享常见的页面路由方式及业内优秀的实践，并对DiskCloud继续进行改造优化。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a href="https://developer.android.com/training/dependency-injection" target="_blank" rel="noopener">Android 中的依赖项注入</a></p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
+<ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/05/07/移动应用遗留系统重构（7）-解耦重构演示篇（一）-视频演示/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2189,226 +2405,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2020/06/25/Android-R-新特性变化/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2020/06/25/Android-R-新特性变化/" itemprop="url">
-                  Android R 新特性变化
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-25T11:11:11+08:00">
-                2020-06-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/06/25/Android-R-新特性变化/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/06/25/Android-R-新特性变化/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h1><ul>
-<li><p>Android Q 主要新特性</p>
-</li>
-<li><p>Android R 版本发布计划</p>
-</li>
-<li><p>Android R 功能演示（Video）</p>
-</li>
-<li><p>Android R 新功能与API特性</p>
-</li>
-<li>总结与思考</li>
-</ul>
-<h1 id="1️⃣-Android-Q-主要新特性-emsp-emsp"><a href="#1️⃣-Android-Q-主要新特性-emsp-emsp" class="headerlink" title="1️⃣ Android Q 主要新特性&emsp; &emsp;"></a>1️⃣ Android Q 主要新特性&emsp; &emsp;</h1><blockquote>
-<p>用于可折叠设备、深色主题、手势导航、连接等新特性  </p>
-</blockquote>
-<h2 id="可折叠设备"><a href="#可折叠设备" class="headerlink" title="可折叠设备"></a>可折叠设备</h2><p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171edd4746f2c764" width="400/"></p>
-<p>Android 10 在 onResume 和 onPause 中添加了多项改进，用于支持多项恢复，并在应用获得焦点时通知应用</p>
-<h2 id="深色主题"><a href="#深色主题" class="headerlink" title="深色主题"></a>深色主题</h2><p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171edd474c281dd2" width="400/"></p>
-<p>Android 10 新增了一个系统级的深色主题，非常适合光线较暗的场景并能帮助节省电量。</p>
-<ul>
-<li>DayNight 主题</li>
-<li>Force Dark</li>
-</ul>
-<h2 id="手势导航"><a href="#手势导航" class="headerlink" title="手势导航"></a>手势导航</h2><p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171edd475409817a" alt=""></p>
-<p>Android 10 引入了全手势导航模式，该模式不显示通知栏区域，允许应用使用全屏来提供更丰富、更让人沉浸的体验。</p>
-<h2 id="共享快捷方式"><a href="#共享快捷方式" class="headerlink" title="共享快捷方式"></a>共享快捷方式</h2><p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171edd477864655a" width="400/"></p>
-<p>共享快捷方式功能可使共享更加轻松快捷，让用户能够直接跳转到其他应用来共享内容。</p>
-<h2 id="5G-网络"><a href="#5G-网络" class="headerlink" title="5G 网络"></a>5G 网络</h2><p>Android 10 新增了针对 5G 的平台支持，可以使用连接 API (ConnectivityManager)来检测设备是否具有高带宽连接，还可以检查连接是否按流量计费。借助这些功能，应用和游戏可以为使用 5G 的用户量身打造丰富的沉浸式体验。</p>
-<h2 id="更多"><a href="#更多" class="headerlink" title="更多"></a>更多</h2><p> 安全、连接、性能优化</p>
-<blockquote>
-<p><a href="https://developer.android.com/about/versions/10/highlights" target="_blank" rel="noopener">https://developer.android.com/about/versions/10/highlights</a></p>
-</blockquote>
-<h1 id="2️⃣-Android-R-版本发布计划-emsp-emsp"><a href="#2️⃣-Android-R-版本发布计划-emsp-emsp" class="headerlink" title="2️⃣ Android R 版本发布计划&emsp; &emsp;"></a>2️⃣ Android R 版本发布计划&emsp; &emsp;</h1><h2 id="版本发布时间"><a href="#版本发布时间" class="headerlink" title="版本发布时间"></a>版本发布时间</h2><p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171eddafc7e3a6cf?w=946&amp;h=252&amp;f=png&amp;s=41403" alt=""></p>
-<blockquote>
-<p>第3季度发布面向 AOSP 和生态系统发布 Android 11 最终版本</p>
-</blockquote>
-<h2 id="版本发布计划"><a href="#版本发布计划" class="headerlink" title="版本发布计划"></a>版本发布计划</h2><p> <img src="https://user-gold-cdn.xitu.io/2020/5/7/171edd47479a77a8?w=1238&amp;h=634&amp;f=png&amp;s=137237" alt=""></p>
-<h1 id="3️⃣-Android-R-功能演示（Video）-emsp-emsp"><a href="#3️⃣-Android-R-功能演示（Video）-emsp-emsp" class="headerlink" title="3️⃣ Android R 功能演示（Video）&emsp; &emsp;"></a>3️⃣ Android R 功能演示（Video）&emsp; &emsp;</h1><h2 id="Android-11-First-Look-7-Most-Exciting-Features"><a href="#Android-11-First-Look-7-Most-Exciting-Features" class="headerlink" title="Android 11 First Look: 7 Most Exciting Features!"></a>Android 11 First Look: 7 Most Exciting Features!</h2><p>  <a href="https://www.youtube.com/watch?v=04hjpFshguU" target="_blank" rel="noopener">https://www.youtube.com/watch?v=04hjpFshguU</a></p>
-<h2 id="新功能特性"><a href="#新功能特性" class="headerlink" title="新功能特性"></a>新功能特性</h2><ul>
-<li>Improved Notification Share</li>
-<li>Bubbles</li>
-<li>Better Permissions</li>
-<li>Screen Recorded</li>
-<li>Improved DND (Do Not Disturb)</li>
-<li>Auto Dark Mode</li>
-<li>Other Changes</li>
-</ul>
-<h1 id="4️⃣-Android-R-新API特性-emsp-emsp"><a href="#4️⃣-Android-R-新API特性-emsp-emsp" class="headerlink" title="4️⃣ Android R 新API特性&emsp; &emsp;"></a>4️⃣ Android R 新API特性&emsp; &emsp;</h1><blockquote>
-<p>5G、共享、连接、媒体、显示等方面的 API</p>
-</blockquote>
-<h2 id="帧速率"><a href="#帧速率" class="headerlink" title="帧速率"></a>帧速率</h2><p>Android 11 提供了一个 API，可让应用告知系统它们预期的帧速率。该 API 的主要目的是让应用能够更好地利用支持的所有显示屏刷新频率（90Hz 120Hz）</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Surface.setFrameRate()</span><br><span class="line">SurfaceControl.Transaction.setFrameRate()</span><br><span class="line">ANativeWindow_setFrameRate()</span><br><span class="line">ASurfaceTransaction_setFrameRate()</span><br></pre></td></tr></table></figure>
-<h2 id="瀑布屏"><a href="#瀑布屏" class="headerlink" title="瀑布屏"></a>瀑布屏</h2><p>Android 11 提供了一些 API 来支持瀑布屏，这是一种无边框的全面屏。（超大的弯折角度）</p>
-<ul>
-<li><p>调用 DisplayCutout. getWaterfallInsets() 以获取瀑布边衬区的精确尺寸。</p>
-</li>
-<li><p>将窗口布局属性 layoutInDisplayCutoutMode 设为 LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS，以允许窗口延伸到屏幕各个边缘上的刘海和瀑布区域</p>
-</li>
-</ul>
-<h2 id="APK-签名方案-v4-amp-增量-APK-安装"><a href="#APK-签名方案-v4-amp-增量-APK-安装" class="headerlink" title="APK 签名方案 v4 &amp; 增量 APK 安装"></a>APK 签名方案 v4 &amp; 增量 APK 安装</h2><p>在设备上安装大型（2GB 以上）APK 可能需要很长的时间，增量 APK 安装通过安装 APK 中足以用来启动应用的部分，同时在后台流式传输剩余数据，加速了这一过程。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb install --incremental</span><br></pre></td></tr></table></figure>
-<h2 id="NDK-图像解码器"><a href="#NDK-图像解码器" class="headerlink" title="NDK 图像解码器"></a>NDK 图像解码器</h2><p>NDK ImageDecoder API 提供了一种标准 API，供 Android C/C++ 应用直接解码图像。应用开发者不再需要使用框架 API（通过 JNI）或捆绑第三方图像解码库。</p>
-<h2 id="应用进程退出原因"><a href="#应用进程退出原因" class="headerlink" title="应用进程退出原因"></a>应用进程退出原因</h2><p> Android 11 引入了 getHistoricalProcessExitReasons() 方法，用于报告近期任何进程终止的原因。应用可以使用此方法来收集崩溃诊断信息，例如进程终止是由于 ANR、内存问题还是其他原因所致。</p>
-<h2 id="更好地支持包含多个帧的-HEIF-图片"><a href="#更好地支持包含多个帧的-HEIF-图片" class="headerlink" title="更好地支持包含多个帧的 HEIF 图片"></a>更好地支持包含多个帧的 HEIF 图片</h2><p>从 Android 11 开始，如果您调用 ImageDecoder.decodeDrawable() 并传递包含帧序列的 HEIF 图片（如动画或连拍照片），则该方法会返回包含整个图片序列的 AnimatedImageDrawable。</p>
-<blockquote>
-<p>HEIF就是”高效图像格式“，是新一代的图片压缩技术。在同样条件下，HEIF的体积可以比jpg小接近一</p>
-</blockquote>
-<h2 id="使用数据-blob-安全共享大型数据集"><a href="#使用数据-blob-安全共享大型数据集" class="headerlink" title="使用数据 blob 安全共享大型数据集"></a>使用数据 blob 安全共享大型数据集</h2><p>为帮助减少网络中和磁盘上的数据冗余，Android 11（API 级别“R”）会缓存共享数据集，为机器学习和媒体播放等用例提供支持.</p>
-<blockquote>
-<p>当一个应用下载完某个数据后，可以将该数据共享给指定的包名应用、或者相同签名应用、或者无限制公开，其他应用可以直接读取该数据</p>
-</blockquote>
-<h2 id="在-Android-模拟器上运行-ARM-应用"><a href="#在-Android-模拟器上运行-ARM-应用" class="headerlink" title="在 Android 模拟器上运行 ARM 应用"></a>在 Android 模拟器上运行 ARM 应用</h2><p>新的系统映像在执行 ARM 二进制文件方面取得了显著的性能提升。Android 11 系统映像能够在不影响整个系统的前提下，直接将 ARM 指令转换成 x86 指令。开发者无需搭建高负载的 ARM 环境即可执行 ARM 二进制文件并进行测试。</p>
-<blockquote>
-<p><a href="https://www.jianshu.com/p/d2def" target="_blank" rel="noopener">https://www.jianshu.com/p/d2def</a><br>eb32558</p>
-</blockquote>
-<h2 id="更多-1"><a href="#更多-1" class="headerlink" title="更多"></a>更多</h2><p>Android R 目前为 DP3  ，更多特性参考：</p>
-<blockquote>
-<p><a href="https://developer.android.com/preview/features" target="_blank" rel="noopener">https://developer.android.com/preview/features</a></p>
-</blockquote>
-<h1 id="5️⃣-总结与思考-💡-emsp-emsp"><a href="#5️⃣-总结与思考-💡-emsp-emsp" class="headerlink" title="5️⃣ 总结与思考 💡&emsp; &emsp;"></a>5️⃣ 总结与思考 💡&emsp; &emsp;</h1><ul>
-<li><p>Android R 最新版本为DP3,目前整体来看，主要是一些优化和改进，没有比较重大的更新。</p>
-</li>
-<li><p>从Android Q 开始，原生系统支持了国内ROM非常多的特性，包含深色主题、导航手势、滚动截屏、屏幕录像、共享快捷等</p>
-</li>
-</ul>
-<h2 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h2><p><strong>欢迎关注我的个人公众号</strong></p>
-<p>微信搜索：<strong>一码一浮生</strong>，或者搜索公众号ID:<strong>life2code</strong></p>
-<p><img src="https://user-gold-cdn.xitu.io/2020/5/7/171eddf3fb3a7139?w=1066&amp;h=386&amp;f=png&amp;s=117806" alt=""></p>
-<ul>
-<li>作者：黄俊彬 </li>
-<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
-<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
-<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2456,7 +2452,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">89</span>
+                <span class="site-state-item-count">90</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
