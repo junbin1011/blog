@@ -1,0 +1,771 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="随笔,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="前言最近996很火，但抛开企业的强制性文化外，是否还有其他的各种因素导致我们效率低下。我们能如何去提高编程的效率，如何有效去规避项目中的风险，使得项目的迭代计划能正常的执行，项目能按期交付。 下面先谈谈几个关于项目交付的问题。 1、如何量化评判编程是否高效？ 2、在项目开展过程中，是否遇到非技术或自身的原因，导致效率低下？ 3、是否曾经因为自身的原因导致项目拖延，你将会怎么样进行调整？ 4、你有什">
+<meta name="keywords" content="随笔">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何高效完成项目交付">
+<meta property="og:url" content="https://junbin1011.github.io/2019/04/24/如何高效完成项目交付/index.html">
+<meta property="og:site_name" content="JunBin">
+<meta property="og:description" content="前言最近996很火，但抛开企业的强制性文化外，是否还有其他的各种因素导致我们效率低下。我们能如何去提高编程的效率，如何有效去规避项目中的风险，使得项目的迭代计划能正常的执行，项目能按期交付。 下面先谈谈几个关于项目交付的问题。 1、如何量化评判编程是否高效？ 2、在项目开展过程中，是否遇到非技术或自身的原因，导致效率低下？ 3、是否曾经因为自身的原因导致项目拖延，你将会怎么样进行调整？ 4、你有什">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5125122-f19017f2b632a952?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5125122-c16a6f03503b2c9b?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2021-03-25T02:39:46.437Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="如何高效完成项目交付">
+<meta name="twitter:description" content="前言最近996很火，但抛开企业的强制性文化外，是否还有其他的各种因素导致我们效率低下。我们能如何去提高编程的效率，如何有效去规避项目中的风险，使得项目的迭代计划能正常的执行，项目能按期交付。 下面先谈谈几个关于项目交付的问题。 1、如何量化评判编程是否高效？ 2、在项目开展过程中，是否遇到非技术或自身的原因，导致效率低下？ 3、是否曾经因为自身的原因导致项目拖延，你将会怎么样进行调整？ 4、你有什">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/5125122-f19017f2b632a952?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://junbin1011.github.io/2019/04/24/如何高效完成项目交付/">
+
+
+
+
+
+  <title> 如何高效完成项目交付 | JunBin </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b3ffb4912eee79c795100275f268095c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JunBin</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">一花一世界，一码一浮生</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2019/04/24/如何高效完成项目交付/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                如何高效完成项目交付
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-24T21:54:44+08:00">
+                2019-04-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/04/24/如何高效完成项目交付/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/04/24/如何高效完成项目交付/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近996很火，但抛开企业的强制性文化外，是否还有其他的各种因素导致我们效率低下。我们能如何去提高编程的效率，如何有效去规避项目中的风险，使得项目的迭代计划能正常的执行，项目能按期交付。</p>
+<p>下面先谈谈几个关于项目交付的问题。</p>
+<p>1、如何量化评判编程是否高效？</p>
+<p>2、在项目开展过程中，是否遇到非技术或自身的原因，导致效率低下？</p>
+<p>3、是否曾经因为自身的原因导致项目拖延，你将会怎么样进行调整？</p>
+<p>4、你有什么项目中的实践经验，使得效率更高呢？</p>
+<p>下面将谈谈自己的一些经验及总结。欢迎大家有兴趣一起探讨。</p>
+<h1 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h1><p><img src="http://upload-images.jianshu.io/upload_images/5125122-f19017f2b632a952?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<h2 id="1、评判标准"><a href="#1、评判标准" class="headerlink" title="1、评判标准"></a>1、评判标准</h2><p>为什么首先谈评判标准，是因为这个是衡量的基准。如何去衡量编程工作是否高效，相信不同的公司有不同的方法，但通常都没有办法达到可量化。往往是通过个人的经验评判，或者是横向的对比，从而去进行一个评定。</p>
+<p>当然如果公司有完善的考核标准是最好不过。但是在没有的情况下，通常项目都会有一个大的时间范围及节点。我们需要保障自己的工作不会影响到整体的项目进度。</p>
+<h2 id="2、外部因素"><a href="#2、外部因素" class="headerlink" title="2、外部因素"></a>2、外部因素</h2><p>相信很多做技术的同学通常抱怨都是技术外的因素导致项目不能如期进行。例如需求变更（通常还不会给加时间）、沟通层级复杂、项目需求估点不按常理出牌等等。各种各样的外部因素，最终导致项目不能如期正常交付，但最后往往都是研发的同学要背锅。总结一下，通常有如下几种情况：</p>
+<p>1、需求问题 （无边际、频繁变更）</p>
+<p>2、沟通问题（没有统一高效的沟通渠道）</p>
+<p>3、管理问题 （没有规范的流程，明确的分工，详细的迭代计划）</p>
+<h2 id="3、自身因素"><a href="#3、自身因素" class="headerlink" title="3、自身因素"></a>3、自身因素</h2><p>由于自身的因素导致项目延期也非常常见。对于业务需求没有深刻的理解导致返工、缺乏主动的沟通、整体的时间规划、良好的编码规范（后期fix问题占用需求开发时间）等等。都会是导致效率低下、项目延期交付的诱因。总结一下，通常有如下几种情况：</p>
+<p>1、缺乏全局思维，考虑问题不够全面，不能预期风险</p>
+<p>2、缺乏积极主动的沟通，埋头苦干</p>
+<p>3、缺乏良好的时间规划及自我管理能力</p>
+<p>4、缺乏良好的编码规范及架构设计、组件设计能力</p>
+<h1 id="经验总结"><a href="#经验总结" class="headerlink" title="经验总结"></a>经验总结</h1><p><img src="http://upload-images.jianshu.io/upload_images/5125122-c16a6f03503b2c9b?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<h2 id="时间规划"><a href="#时间规划" class="headerlink" title="时间规划"></a>时间规划</h2><p>1、工作的8小时中保持专注</p>
+<p>保持工作时间的专注，这是基础，但往往又很难。特别是各种会议、邮件、聊天软件消息，往往会打断你。我们需要尽量控制自己专注，减少外部因素的干扰。</p>
+<p>2、充分理解项目需求，对齐目标愿景</p>
+<p>清晰的目标及与需求方对齐目标信息，这点尤为重要。可以有效避免在一开始就走错路，导致返工。同时需要从技术的角度进行整体的规划评估，那些是技术难点需要预研（往往给时间也不一定能完成）、那些是需要大量的劳动力投入。</p>
+<p>3、充分的利用边角时间</p>
+<p>有些技术方案往往是需要时间去思考，充分利用边角时间（例如地铁时间、吃饭间隙时间等）进行一些思考，往往可能有意向不到的收获。</p>
+<p>4、制定详细的计划</p>
+<p>我始终相信要达到目标，一定要有详细的可执行计划。在项目开展的过程中，应尽可能避免没有时间节点概念，甚至出现干到那是那得情况。尽可能将目标分解，形成月、周、天的计划。</p>
+<p> 5、保持风险意识</p>
+<p>前面说到的需要对技术有整体的评估，这其实也是风险意识的一种体现。我们需要评估那些是技术难点、那些是需要劳动力投入。在项目前期尽可能提出来，从技术或业务上尽可能避免入坑。</p>
+<h2 id="沟通能力"><a href="#沟通能力" class="headerlink" title="沟通能力"></a>沟通能力</h2><p>1、及时有效的沟通</p>
+<p>项目往往在推进的过程中，会有各种各样的因素产生变化。所以及时有效的沟通这点应该伴随整个项目的周期。</p>
+<p>2、统一的沟通通道</p>
+<p>保持统一的沟通通道能有效避免信息不对称，减少不必要的沟通成本及信息错误，及时有效的同步最新的信息。通常可采用站会、统一项目群组、实时同步协作平台等形式，及时保持信息的同步。</p>
+<h2 id="优秀编码能力"><a href="#优秀编码能力" class="headerlink" title="优秀编码能力"></a>优秀编码能力</h2><p>1、良好的编程习惯</p>
+<p>在团队开发，良好的编程习惯及统一的规范尤为重要，这可以避免很多不必要的沟通，减少沟通及后期维护的成本。</p>
+<p>2、良好的架构设计、组件设计</p>
+<p>保持代码可扩展性，让我们可以更从容应对需求的变化。组件化的设计能让我们的代码更易于复用，大大的提高产出。</p>
+<h1 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h1><p>这些年的经验，一个项目的成败，往往不是因为技术的原因，通常都是管理上出了问题。对于一个程序员，在保持优秀的编码能力外，还要重视项目上的软技能。提升沟通、风险意识、制定计划、自我管理等的能力。</p>
+<p>总结问题，制定计划。不断实践，不断超越自己！</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/随笔/" rel="tag"># 随笔</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/24/回顾2018，展望2019/" rel="next" title="回顾2018，展望2019">
+                <i class="fa fa-chevron-left"></i> 回顾2018，展望2019
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/25/clean-code-java-你都会了吗？/" rel="prev" title="clean-code-java 你都会了吗？">
+                clean-code-java 你都会了吗？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2019/04/24/如何高效完成项目交付/" data-title="如何高效完成项目交付" data-url="https://junbin1011.github.io/2019/04/24/如何高效完成项目交付/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f" alt="黄俊彬">
+          <p class="site-author-name" itemprop="name">黄俊彬</p>
+           
+              <p class="site-description motion-element" itemprop="description">一花一世界，一码一浮生</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junbin1011" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" title="zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#问题分析"><span class="nav-number">2.</span> <span class="nav-text">问题分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、评判标准"><span class="nav-number">2.1.</span> <span class="nav-text">1、评判标准</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、外部因素"><span class="nav-number">2.2.</span> <span class="nav-text">2、外部因素</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、自身因素"><span class="nav-number">2.3.</span> <span class="nav-text">3、自身因素</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#经验总结"><span class="nav-number">3.</span> <span class="nav-text">经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#时间规划"><span class="nav-number">3.1.</span> <span class="nav-text">时间规划</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#沟通能力"><span class="nav-number">3.2.</span> <span class="nav-text">沟通能力</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优秀编码能力"><span class="nav-number">3.3.</span> <span class="nav-text">优秀编码能力</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#思考"><span class="nav-number">4.</span> <span class="nav-text">思考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">黄俊彬</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"junbin"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

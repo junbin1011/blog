@@ -271,6 +271,164 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/15/移动应用遗留系统重构（11）-制品管理篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/06/15/移动应用遗留系统重构（11）-制品管理篇/" itemprop="url">
+                  移动应用遗留系统重构（11）- 制品管理篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-15T09:58:47+08:00">
+                2021-06-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/15/移动应用遗留系统重构（11）-制品管理篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/15/移动应用遗留系统重构（11）-制品管理篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇我们提到CloudDisk团队决定将团队划分为5个团队，分别管理文件、动态、用户中心、平台及公共库。整个项目不再统一使用一个Git大仓进行代码管理，每个团队能独立维护自己的代码仓库。</p>
+<p>但目前虽然各个模块已经解耦完成，但还是以源码的依赖的形式进行编译。我们要将业务拆分独立的仓库，需要把源码的依赖都调整为二进制的依赖才行。本篇我们就对CloudDisk进行改造，解开源码的编译依赖。</p>
+<h1 id="二进制发布配置"><a href="#二进制发布配置" class="headerlink" title="二进制发布配置"></a>二进制发布配置</h1><p>这里我们选择常用的maven进行管理。为了方便演示，我们使用本地maven进行配置。实际项目中我们只要把地址设置为服务器的maven地址则可，在模块的build.gradle添加代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apply plugin: &apos;maven&apos;</span><br><span class="line"></span><br><span class="line">group = &apos;com.cloud.disk&apos;</span><br><span class="line">archivesBaseName = &apos;library&apos;</span><br><span class="line">version = &apos;1.0.0&apos;</span><br><span class="line"></span><br><span class="line">repositories.mavenCentral()</span><br><span class="line"></span><br><span class="line">uploadArchives &#123;</span><br><span class="line">    repositories.mavenDeployer &#123;</span><br><span class="line">        repository(url: &apos;file:&apos;+ rootDir.getPath()+&apos;/lib&apos;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在根目录的build.gradle添加代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">allprojects &#123;</span><br><span class="line">    repositories &#123;</span><br><span class="line">        maven&#123;</span><br><span class="line">            url &apos;file:&apos;+ rootDir.getPath()+&apos;/lib&apos;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>工程中就可以引用本地maven发布的jar包了。</p>
+<p>触发版本发布,执行如下命令:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./gradlew :library:uploadArchives</span><br></pre></td></tr></table></figure>
+<h1 id="CloudDisk重构示例"><a href="#CloudDisk重构示例" class="headerlink" title="CloudDisk重构示例"></a>CloudDisk重构示例</h1><p>具体Library改造示例代码见<a href="https://github.com/junbin1011/CloudDisk/commit/0d3a6a51bee60c479a43e013259ff2e08b1d04cb" target="_blank" rel="noopener">Github</a></p>
+<p>这里我们看看改造后的App Gradle文件dependency如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;com.cloud.disk:library:1.0.0&apos;</span><br><span class="line">implementation &apos;com.cloud.disk:api:1.0.0&apos;</span><br><span class="line">implementation &apos;com.cloud.disk:platform:1.0.0&apos;</span><br><span class="line"></span><br><span class="line">implementation &apos;com.cloud.disk.bundle:file:1.0.0&apos;</span><br><span class="line">implementation &apos;com.cloud.disk.bundle:dynamic:1.0.0&apos;</span><br><span class="line">implementation &apos;com.cloud.disk.bundle:user:1.0.0&apos;</span><br></pre></td></tr></table></figure></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>基于前面我们做了大量的解耦工作，本篇我们通过本地maven进行二进制管理，实际项目中这些aar都在远程的maven中管理。我们也可以将各个业务特性在独立的仓库中管理。</p>
+<p>在架构设计中App是整体工程的集成，用于集成及最后的发布。分仓后所有的业务Bundle在独立的仓库中维护，我们希望Bundle能够进行独立的编译调试，下一篇移动应用遗留系统重构（12）- 编译调试篇，我们将继续对CloudDisk进行改造，让业务Bundle支持独立的编译调试。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2186,175 +2344,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/03/25/移动应用遗留系统重构（1）-开篇/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2021/03/25/移动应用遗留系统重构（1）-开篇/" itemprop="url">
-                  移动应用遗留系统重构（1）-开篇
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-03-25T14:06:13+08:00">
-                2021-03-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/03/25/移动应用遗留系统重构（1）-开篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/03/25/移动应用遗留系统重构（1）-开篇/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>2008年9月22日，谷歌正式对外发布第一款Android手机。苹果公司最早于2007年1月9日的MacWorld大会上公布IOS系统。移动应用领域的发展已经超过10年。在<a href="https://www.appannie.com/cn/insights/market-data/mobile-2021-new-records-beckon/" target="_blank" rel="noopener">App Annie 最新的移动市场报告</a>中分享2020应用下载量已经达到<strong>2180亿次</strong>，同比增加7%。根据<a href="https://www.statista.com/statistics/289418/number-of-available-apps-in-the-google-play-store-quarter/#:~:text=Google%20Play%3A%20number%20of%20available%20apps%20as%20of%20Q4%202020&amp;text=This%20statistic%20gives%20information%20on,compared%20to%20the%20previous%20quarter." target="_blank" rel="noopener">Statista</a>的统计，2020年度Google Play的应用数量为<strong>3148932</strong>个。</p>
-<p>在移动互联网的高速发展及竞争中，更快及更高质量的交付用户，显然尤为重要。但很多产品随着移动互联网的发展，已经迭代超过10年。在这个过程中人员流动、技术债务累计、技术生态更新，使得产生了大量的遗留系统。就像一辆低排量的破旧汽车，再大的马路，技术再好的驾驶员，达到车辆本身的系统瓶颈，速度就很难再提升起来。</p>
-<h1 id="遗留系统"><a href="#遗留系统" class="headerlink" title="遗留系统"></a>遗留系统</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEB3e725306722807f7b16a7a2932158221?method=download&amp;shareKey=cda4221c1a3851377676394cae3bceb4" alt=""></p>
-<p>在以往的项目中，遇到了大量的这种遗留系统。这些系统具有以下一些特点。</p>
-<ul>
-<li>大泥球架构，代码量上百万行，开发人员超过100+</li>
-<li>内部耦合高，代码修改维护牵一发动全身，质量低</li>
-<li>编译集成调试慢，没有任何自动化测试，开发效率低</li>
-<li>技术栈陈旧，祖传代码，无人敢动</li>
-</ul>
-<p>在这样的背景下，个别少的团队选择重写，当然没有良好的过程管理及方法，好多重写完又成了新的遗留系统。也有的团队选择重构，但目前相关的方法及教程比较少。这里推荐一下<a href="https://book.douban.com/subject/33400354/" target="_blank" rel="noopener">《重构（第2版）》</a>，书中有基本的重构手法。另外一本<a href="https://book.douban.com/subject/2248759/" target="_blank" rel="noopener">《修改代码的艺术》</a>，书中有很多基于遗留代码开发的示例。但对于开发人员来说，缺少比较贴近移动应用项目实战的重构指导及系统方法。很多团队依旧没有解决遗留系统根本的原因，仅靠不断的堆人，恶性循环。</p>
-<h1 id="CloudDisk-演示示例"><a href="#CloudDisk-演示示例" class="headerlink" title="CloudDisk 演示示例"></a>CloudDisk 演示示例</h1><p>CloudDisk是一个类似于Google Drive的云存储应用。该应用主要拥有3大核心业务模块，文件、动态及个人中心。</p>
-<p>该项目已经维护超过10年以上，目前有用开发人员100+。目前代码在一个大模块中，约30w行左右，编译时间10分钟以上。团队目前主要还面临几个问题。</p>
-<ol>
-<li>开发效率低</li>
-</ol>
-<blockquote>
-<p>编译时间长，经常出现代码合并冲突。遗留大量技术债务，团队疲于交付需求</p>
-</blockquote>
-<ol start="2">
-<li>代码质量差</li>
-</ol>
-<blockquote>
-<p>经常修改出新问题，版本提测问题多，没有任何自动化测试。</p>
-</blockquote>
-<ol start="3">
-<li>版本发布周期长</li>
-</ol>
-<blockquote>
-<p>往往需要1个月以上，市场反馈响应慢。</p>
-</blockquote>
-<p>我们希望通过一个更贴近实际工程项目的浓缩版遗留系统示例，持续解决团队在产品不断迭代中遇到的问题。从架构设计与分析、安全重构、基础生态设施、流水线、编译构建等方面，一步一步介绍如何进行持续演化。我们将通过文章及视频演示的方式进行分享，希望通过这个系列文章，大家可以更系统的掌握移动应用项目中实战的重构技巧及落地方法。</p>
-<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
-<h2 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h2><p><strong>欢迎关注我的个人公众号</strong></p>
-<p>微信搜索：<strong>一码一浮生</strong>，或者搜索公众号ID:<strong>life2code</strong></p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB8682567ec4f22dab1ed9c5350ec9db62?method=download&amp;shareKey=06e819ed512febb7dcf540161b125867" alt=""></p>
-<ul>
-<li>作者：黄俊彬 </li>
-<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
-<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
-<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2402,7 +2391,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-count">93</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

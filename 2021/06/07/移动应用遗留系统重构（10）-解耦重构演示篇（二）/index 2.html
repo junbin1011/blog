@@ -1,0 +1,841 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="遗留系统重构,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="前言在移动应用遗留系统重构（8）- 依赖注入篇 、移动应用遗留系统重构（9）- 路由篇章节中，我们已经完成了基础的注入和路由框架搭建。接着移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示 ,本篇我们会把App中剩余的 platform 包、dynamic 包进行重构。文中会主要列出分析及解耦的思路及过程,并且会有详细的完整演示视频。 platform包重构代码演示：https://mp">
+<meta name="keywords" content="遗留系统重构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动应用遗留系统重构（10）- 解耦重构演示篇（二）">
+<meta property="og:url" content="https://junbin1011.github.io/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/index.html">
+<meta property="og:site_name" content="JunBin">
+<meta property="og:description" content="前言在移动应用遗留系统重构（8）- 依赖注入篇 、移动应用遗留系统重构（9）- 路由篇章节中，我们已经完成了基础的注入和路由框架搭建。接着移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示 ,本篇我们会把App中剩余的 platform 包、dynamic 包进行重构。文中会主要列出分析及解耦的思路及过程,并且会有详细的完整演示视频。 platform包重构代码演示：https://mp">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB20315a1c7461f5d6380f78c80437cb41?method=download&shareKey=9f1d6c906815b5da19486d59973f36f2">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB1fc4d93cb70aaca6d30404ed75410df9?method=download&shareKey=2da6020618d2aa890e986e35aaeac13a">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBdb54a5fa8f02d579973b4fab6a276be3?method=download&shareKey=73ba5452e0e6dbe93572efe950ed4dd8">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB14d05f484fc749eea26036e37a9bc3f1?method=download&shareKey=f76b810c0b921711dcfeb5c871f62f14">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB3a89a9dbf9508e7633e8bed85407cbeb?method=download&shareKey=1b6b4df87beb989e019da0b9c5b5b134">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBbd785820b2fe08b4841580eeb75b1577?method=download&shareKey=a58dc6494a68a6e7a60f2280f54b0dc9">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBe6ed4d585e0976fdef47480c7b8e40d0?method=download&shareKey=8532a1692a88ff1e04d4fcfe7d544567">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBbaff5f043f366f8ce6c213cabba8b661?method=download&shareKey=15c44bc893cac332e00e02e598375771">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBa209e00bd30a6bf03e390086c0963dc9?method=download&shareKey=436f6d8516546d1dbf13f90be8b752fd">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB6eb57e6392a74c38536c69e94ce2a7f6?method=download&shareKey=f15e163af24acd151e4fd612e9168f94">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBbaff5f043f366f8ce6c213cabba8b661?method=download&shareKey=15c44bc893cac332e00e02e598375771">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBd57e058ace18b246cf22d3ceb2eadabd?method=download&shareKey=b0695709714c7c693fd01a3ae0d66179">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB9e99a1df9b882c8486f637a4d4e56dee?method=download&shareKey=a8dd390088541d8e40e02f8583fc0b72">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
+<meta property="og:updated_time" content="2021-06-07T02:10:50.002Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动应用遗留系统重构（10）- 解耦重构演示篇（二）">
+<meta name="twitter:description" content="前言在移动应用遗留系统重构（8）- 依赖注入篇 、移动应用遗留系统重构（9）- 路由篇章节中，我们已经完成了基础的注入和路由框架搭建。接着移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示 ,本篇我们会把App中剩余的 platform 包、dynamic 包进行重构。文中会主要列出分析及解耦的思路及过程,并且会有详细的完整演示视频。 platform包重构代码演示：https://mp">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB20315a1c7461f5d6380f78c80437cb41?method=download&shareKey=9f1d6c906815b5da19486d59973f36f2">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://junbin1011.github.io/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/">
+
+
+
+
+
+  <title> 移动应用遗留系统重构（10）- 解耦重构演示篇（二） | JunBin </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b3ffb4912eee79c795100275f268095c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JunBin</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">一花一世界，一码一浮生</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                移动应用遗留系统重构（10）- 解耦重构演示篇（二）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-07T10:09:38+08:00">
+                2021-06-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在<a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇
+</a>、<a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a>章节中，我们已经完成了基础的注入和路由框架搭建。接着<a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示
+</a>,本篇我们会把App中剩余的 platform 包、dynamic 包进行重构。文中会主要列出分析及解耦的思路及过程,并且会有详细的完整演示视频。</p>
+<p><strong>platform包重构代码演示：</strong><br><a href="https://mp.weixin.qq.com/s/YJLBFBD9T6F0zW7hWINoZA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/YJLBFBD9T6F0zW7hWINoZA</a></p>
+<p><strong>dynamic 包重构代码演示：</strong><br><a href="https://mp.weixin.qq.com/s/ZcDDIrJwUbz5JCgrzjfteg" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/ZcDDIrJwUbz5JCgrzjfteg</a></p>
+<h1 id="安全重构演示"><a href="#安全重构演示" class="headerlink" title="安全重构演示"></a>安全重构演示</h1><h2 id="platform-包重构"><a href="#platform-包重构" class="headerlink" title="platform 包重构"></a>platform 包重构</h2><ol>
+<li>依赖分析</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB20315a1c7461f5d6380f78c80437cb41?method=download&amp;shareKey=9f1d6c906815b5da19486d59973f36f2" alt=""></p>
+<p>platform 中存在对上层bundle中的反向依赖，该依赖需要解除后，便可将该包下沉到platform的模块中。</p>
+<ol start="2">
+<li>安全重构</li>
+</ol>
+<p>重构前代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"> public class LoginActivity extends AppCompatActivity &#123;</span><br><span class="line"></span><br><span class="line">    UserController userController = new UserController();</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_login);</span><br><span class="line">        userController.login(&quot;&quot;, &quot;&quot;, new CallBack() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void success(String message) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void filed(String message) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>重构手法：<strong>提取代理类、内联、移动</strong></p>
+<ul>
+<li>由于UserControler中存在login及getUserInfo方法，我们不能简单将类一起下沉，需要抽取独立类将login方法和LoginActivity一起内聚下沉</li>
+</ul>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB1fc4d93cb70aaca6d30404ed75410df9?method=download&amp;shareKey=2da6020618d2aa890e986e35aaeac13a" alt=""></p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBdb54a5fa8f02d579973b4fab6a276be3?method=download&amp;shareKey=73ba5452e0e6dbe93572efe950ed4dd8" alt=""></p>
+<p>重构后代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class UserController &#123;</span><br><span class="line">    public static boolean isLogin = false;</span><br><span class="line">    public final LoginController loginController = new LoginController();</span><br><span class="line"></span><br><span class="line">    public boolean login(String id, String password, CallBack callBack) &#123;</span><br><span class="line">        //用户登录</span><br><span class="line">        return loginController.login(id, password, callBack);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public UserInfo getUserInfo() &#123;</span><br><span class="line">        //获取用户信息</span><br><span class="line">        return loginController.getUserInfo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>将LoginActivity对UserController的调用内联为对LoginController的调用</li>
+</ul>
+<p>内联login方法：<br><img src="https://note.youdao.com/yws/api/personal/file/WEB14d05f484fc749eea26036e37a9bc3f1?method=download&amp;shareKey=f76b810c0b921711dcfeb5c871f62f14" alt=""></p>
+<p>内联loginController：<br><img src="https://note.youdao.com/yws/api/personal/file/WEB3a89a9dbf9508e7633e8bed85407cbeb?method=download&amp;shareKey=1b6b4df87beb989e019da0b9c5b5b134" alt=""></p>
+<p>抽取成员变量：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBbd785820b2fe08b4841580eeb75b1577?method=download&amp;shareKey=a58dc6494a68a6e7a60f2280f54b0dc9" alt=""></p>
+<p>重构后代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public class LoginActivity extends AppCompatActivity &#123;</span><br><span class="line"></span><br><span class="line">    private LoginController loginController = new LoginController();</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_login);</span><br><span class="line">        //用户登录</span><br><span class="line">        loginController.login(&quot;&quot;, &quot;&quot;, new CallBack() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void success(String message) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void filed(String message) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ol start="3">
+<li>代码移动</li>
+</ol>
+<p>代码移动至独立的platform，加上对应的Gradle依赖：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBe6ed4d585e0976fdef47480c7b8e40d0?method=download&amp;shareKey=8532a1692a88ff1e04d4fcfe7d544567" alt=""></p>
+<ol start="4">
+<li>功能验证<br>执行冒烟测试，验证功能</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./gradlew app:testDeb</span><br><span class="line">ug --tests SmokeTesting</span><br></pre></td></tr></table></figure>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBbaff5f043f366f8ce6c213cabba8b661?method=download&amp;shareKey=15c44bc893cac332e00e02e598375771" alt=""><br><strong>代码演示： <a href="https://mp.weixin.qq.com/s/YJLBFBD9T6F0zW7hWINoZA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/YJLBFBD9T6F0zW7hWINoZA</a></strong></p>
+<p>具体的代码：<a href="https://github.com/junbin1011/CloudDisk/commit/0adcc7d7b8fac54ede058420b5be56fc9e0629dc" target="_blank" rel="noopener">github链接</a></p>
+<h2 id="dynamic-包重构"><a href="#dynamic-包重构" class="headerlink" title="dynamic 包重构"></a>dynamic 包重构</h2><ol>
+<li>依赖分析</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBa209e00bd30a6bf03e390086c0963dc9?method=download&amp;shareKey=436f6d8516546d1dbf13f90be8b752fd" alt=""></p>
+<p>dynamic包存在对fileBundle和userBundle之间的横向依赖。主要是因为动态中需要上传和下载文件，所以依赖了fileBundle，另外需要判断是否登录，所以也依赖了userBundle</p>
+<ol start="2">
+<li>安全重构</li>
+</ol>
+<p>重构前代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">public class DynamicFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    DynamicController dynamicController = new DynamicController();</span><br><span class="line">    FileController fileController = new FileController(new UserStateImpl());</span><br><span class="line">    Button btnShare;</span><br><span class="line">    public static DynamicFragment newInstance() &#123;</span><br><span class="line">        DynamicFragment fragment = new DynamicFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        dynamicController.getDynamicList();</span><br><span class="line">        FileInfo fileInfo = fileController.upload(&quot;/data/data/user.png&quot;);</span><br><span class="line">        dynamicController.post(new Dynamic(), fileInfo);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class DynamicController &#123;</span><br><span class="line"></span><br><span class="line">    FileController fileController=new FileController(new UserStateImpl());</span><br><span class="line"></span><br><span class="line">    public boolean post(Dynamic dynamic, FileInfo fileInfo) &#123;</span><br><span class="line">        //发送一条动态消息</span><br><span class="line">        if (!UserController.isLogin) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        HttpUtils.post(&quot;http://dynamic&quot;, LoginController.userId);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public List&lt;Dynamic&gt; getDynamicList() &#123;</span><br><span class="line">        //通过网络获取动态信息,有些动态带有附件需要下载</span><br><span class="line">        fileController.download(&quot;&quot;);</span><br><span class="line">        return new ArrayList&lt;&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>重构手法：<strong>提前代理类、抽取接口、移动、内联、提取变量等</strong></p>
+<p>由于FileController中除了上传和下载还有获取文件的方案，我们不能简单粗暴就把整个FileController提前接口，希望抽取除了的接口职责更加单一。</p>
+<ul>
+<li>抽取FileTransfer类，提取接口</li>
+<li>将对FileController的依赖内联为FileTransfer</li>
+<li>对UserBundle的依赖使用已经抽取的UserState接口</li>
+<li>使用注入的方式进行依赖管理</li>
+</ul>
+<blockquote>
+<p>由于步骤比较多，大家可以直接看视频的演示，这里就不一一截图说明。</p>
+</blockquote>
+<p>重构后代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">@AndroidEntryPoint</span><br><span class="line">public class DynamicFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    DynamicController dynamicController;</span><br><span class="line">    Button btnShare;</span><br><span class="line">    @Inject</span><br><span class="line">    TransferFile transferFile;</span><br><span class="line"></span><br><span class="line">    public static DynamicFragment newInstance() &#123;</span><br><span class="line">        DynamicFragment fragment = new DynamicFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        dynamicController.getDynamicList();</span><br><span class="line">        //上传文件</span><br><span class="line">        FileInfo fileInfo = transferFile.upload(&quot;/data/data/user.png&quot;);</span><br><span class="line">        dynamicController.post(new Dynamic(), fileInfo);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class DynamicController &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    TransferFile transferFile;</span><br><span class="line">    @Inject</span><br><span class="line">    UserState userState;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    public DynamicController() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public boolean post(Dynamic dynamic, FileInfo fileInfo) &#123;</span><br><span class="line">        //发送一条动态消息</span><br><span class="line">        if (!userState.isLogin()) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        HttpUtils.post(&quot;http://dynamic&quot;, LoginController.userId);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public List&lt;Dynamic&gt; getDynamicList() &#123;</span><br><span class="line">        //通过网络获取动态信息,有些动态带有附件需要下载</span><br><span class="line">        //下载文件</span><br><span class="line">        transferFile.download(&quot;&quot;);</span><br><span class="line">        return new ArrayList&lt;&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ol start="3">
+<li>代码移动</li>
+</ol>
+<p>代码移动至独立的dynamic Bundle，加上对应的Gradle依赖：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB6eb57e6392a74c38536c69e94ce2a7f6?method=download&amp;shareKey=f15e163af24acd151e4fd612e9168f94" alt=""></p>
+<ol start="4">
+<li>功能验证<br>执行冒烟测试，验证功能</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./gradlew app:testDeb</span><br><span class="line">ug --tests SmokeTesting</span><br></pre></td></tr></table></figure>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBbaff5f043f366f8ce6c213cabba8b661?method=download&amp;shareKey=15c44bc893cac332e00e02e598375771" alt=""></p>
+<p><strong>代码演示：<a href="https://mp.weixin.qq.com/s/ZcDDIrJwUbz5JCgrzjfteg" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/ZcDDIrJwUbz5JCgrzjfteg</a></strong></p>
+<p>具体的代码：<a href="https://github.com/junbin1011/CloudDisk/commit/a1067bfca48e2f2e5a59e1bda94a2c56e7b55f5c" target="_blank" rel="noopener">github链接</a></p>
+<h1 id="ArchUnit"><a href="#ArchUnit" class="headerlink" title="ArchUnit"></a>ArchUnit</h1><p>在重构的过程中，我们补充了api的模块，我们需要调整ArchUnit的用例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(ArchUnitRunner.class)</span><br><span class="line">@AnalyzeClasses(packages = &quot;com.cloud.disk&quot;)</span><br><span class="line">public class ArchRuleTest &#123;</span><br><span class="line"></span><br><span class="line">    @ArchTest</span><br><span class="line">    public static final ArchRule architecture_layer_should_has_right_dependency =layeredArchitecture()</span><br><span class="line">            .layer(&quot;Library&quot;).definedBy(&quot;..cloud.disk.library..&quot;)</span><br><span class="line">            .layer(&quot;Api&quot;).definedBy(&quot;..cloud.disk.api..&quot;)</span><br><span class="line">            .layer(&quot;PlatForm&quot;).definedBy(&quot;..cloud.disk.platform..&quot;)</span><br><span class="line">            .layer(&quot;FileBundle&quot;).definedBy(&quot;..cloud.disk.bundle.file..&quot;)</span><br><span class="line">            .layer(&quot;DynamicBundle&quot;).definedBy(&quot;..cloud.disk.bundle.dynamic..&quot;)</span><br><span class="line">            .layer(&quot;UserBundle&quot;).definedBy(&quot;..cloud.disk.bundle.user..&quot;)</span><br><span class="line">            .layer(&quot;AllBundle&quot;).definedBy(&quot;..cloud.disk.bundle..&quot;)</span><br><span class="line">            .layer(&quot;App&quot;).definedBy(&quot;..cloud.disk.app..&quot;)</span><br><span class="line">            .whereLayer(&quot;App&quot;).mayOnlyBeAccessedByLayers()</span><br><span class="line">            .whereLayer(&quot;FileBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">            .whereLayer(&quot;DynamicBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">            .whereLayer(&quot;UserBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">            .whereLayer(&quot;PlatForm&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;)</span><br><span class="line">            .whereLayer(&quot;Api&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;,&quot;PlatForm&quot;)</span><br><span class="line">            .whereLayer(&quot;Library&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;,&quot;PlatForm&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>目前所有之前的架构设计约束已经完整解耦开，但由于测试文件和Hilt会生成一些编译的问题，所以我们还得新增配置文件进行过滤。</p>
+<p>在resource文件夹中新增文件archunit_ignore_patterns.txt，新增过滤规则如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.*com.cloud.disk.SmokeTesting.*</span><br><span class="line">.*com.cloud.disk.DaggerSmokeTesting_*.*</span><br></pre></td></tr></table></figure></p>
+<p>运行架构守护测试命令如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./gradlew app:testDebug --tests ArchRuleTest</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到已正常运行通过。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBd57e058ace18b246cf22d3ceb2eadabd?method=download&amp;shareKey=b0695709714c7c693fd01a3ae0d66179" alt=""></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>经过不断的<strong>演进重构</strong>，目前我们终于把设计的架构守护测试通过，我们通过一张图来对比一下前面的区别。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB9e99a1df9b882c8486f637a4d4e56dee?method=download&amp;shareKey=a8dd390088541d8e40e02f8583fc0b72" alt=""></p>
+<p>随着第一阶段的解耦重构完成，CloudDisk团队决定将团队划分为5个团队，分别管理文件、动态、用户中心、平台及公共库。整个项目不再统一使用一个Git大仓进行代码管理，每个团队能独立维护自己的代码仓库。</p>
+<p>下一篇，移动应用遗留系统重构（11）- 制品管理篇将分享如何将解耦的模块进行二进制发布，模块间不再使用源码依赖编译，能按设计在独立的git仓库中进行管理。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
+<ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/遗留系统重构/" rel="tag"># 遗留系统重构</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/05/25/移动应用遗留系统重构（9）-路由篇/" rel="next" title="移动应用遗留系统重构（9）- 路由篇">
+                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（9）- 路由篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/" data-title="移动应用遗留系统重构（10）- 解耦重构演示篇（二）" data-url="https://junbin1011.github.io/2021/06/07/移动应用遗留系统重构（10）-解耦重构演示篇（二）/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f" alt="黄俊彬">
+          <p class="site-author-name" itemprop="name">黄俊彬</p>
+           
+              <p class="site-description motion-element" itemprop="description">一花一世界，一码一浮生</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junbin1011" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" title="zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安全重构演示"><span class="nav-number">2.</span> <span class="nav-text">安全重构演示</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#platform-包重构"><span class="nav-number">2.1.</span> <span class="nav-text">platform 包重构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dynamic-包重构"><span class="nav-number">2.2.</span> <span class="nav-text">dynamic 包重构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ArchUnit"><span class="nav-number">3.</span> <span class="nav-text">ArchUnit</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CloudDisk示例代码"><span class="nav-number">5.</span> <span class="nav-text">CloudDisk示例代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">6.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">7.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">8.</span> <span class="nav-text">关于</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">黄俊彬</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"junbin"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
