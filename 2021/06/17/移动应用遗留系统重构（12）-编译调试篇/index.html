@@ -1,0 +1,782 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="遗留系统重构,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="前言上一篇移动应用遗留系统重构（11）- 制品管理篇我们完成通过本地maven进行二进制管理改造。在架构设计中App模块是整体工程的集成，用于进行最后的发布。业务Bundle在独立的仓库中维护，并且Bundle都是以Lib的形式存在，我们需要能够对各个业务Bundle进行独立的调试开发。 本篇我们将继续对CloudDisk进行改造，支持Bundle进行独立的调试。 调试方式1. 支持Lib及App">
+<meta name="keywords" content="遗留系统重构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动应用遗留系统重构（12）- 编译调试篇">
+<meta property="og:url" content="https://junbin1011.github.io/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/index.html">
+<meta property="og:site_name" content="JunBin">
+<meta property="og:description" content="前言上一篇移动应用遗留系统重构（11）- 制品管理篇我们完成通过本地maven进行二进制管理改造。在架构设计中App模块是整体工程的集成，用于进行最后的发布。业务Bundle在独立的仓库中维护，并且Bundle都是以Lib的形式存在，我们需要能够对各个业务Bundle进行独立的调试开发。 本篇我们将继续对CloudDisk进行改造，支持Bundle进行独立的调试。 调试方式1. 支持Lib及App">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBad903ad0ddc75d48b758b2d0664b3d43?method=download&shareKey=e7087a218e722efbc5e1b84016fb82af">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB34c9bae2106ecb62a82ced05df862b59?method=download&shareKey=259472e0c054c2d511a507096a228f69">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBcc3ffadbe426a373939a81c16c388aae?method=download&shareKey=2807899d9d699d2274bfce60e387e70e">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB907c6fd5efd1d47e1a418063ce4762d1?method=download&shareKey=b3cdc5d2689eacc93193c4be84e18a74">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBa90da1e952cae1f1f8a41a55936666c6?method=download&shareKey=88839dde7bd30caf97515f567a1ef4a6">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
+<meta property="og:updated_time" content="2021-06-17T05:34:59.271Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动应用遗留系统重构（12）- 编译调试篇">
+<meta name="twitter:description" content="前言上一篇移动应用遗留系统重构（11）- 制品管理篇我们完成通过本地maven进行二进制管理改造。在架构设计中App模块是整体工程的集成，用于进行最后的发布。业务Bundle在独立的仓库中维护，并且Bundle都是以Lib的形式存在，我们需要能够对各个业务Bundle进行独立的调试开发。 本篇我们将继续对CloudDisk进行改造，支持Bundle进行独立的调试。 调试方式1. 支持Lib及App">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEBad903ad0ddc75d48b758b2d0664b3d43?method=download&shareKey=e7087a218e722efbc5e1b84016fb82af">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://junbin1011.github.io/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/">
+
+
+
+
+
+  <title> 移动应用遗留系统重构（12）- 编译调试篇 | JunBin </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b3ffb4912eee79c795100275f268095c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JunBin</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">一花一世界，一码一浮生</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                移动应用遗留系统重构（12）- 编译调试篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-17T13:34:23+08:00">
+                2021-06-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/17/移动应用遗留系统重构（12）-编译调试篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a>我们完成通过本地maven进行二进制管理改造。在架构设计中App模块是整体工程的集成，用于进行最后的发布。业务Bundle在独立的仓库中维护，并且Bundle都是以Lib的形式存在，我们需要能够对各个业务Bundle进行独立的调试开发。</p>
+<p>本篇我们将继续对CloudDisk进行改造，支持Bundle进行独立的调试。</p>
+<h1 id="调试方式"><a href="#调试方式" class="headerlink" title="调试方式"></a>调试方式</h1><h2 id="1-支持Lib及Application切换"><a href="#1-支持Lib及Application切换" class="headerlink" title="1. 支持Lib及Application切换"></a>1. 支持Lib及Application切换</h2><p>我们可以通过配置Gradle的形式，让Module支持Lib及Application的调试，这样既可以满足运行调试，也可以满足发布aar。但是缺点是Gradle要进行配置，并且调试代码和正式代码都在一个工程中。</p>
+<p>我们以FileBundle为例，Gradle配置情况如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">//gradle 文件修改如下</span><br><span class="line"></span><br><span class="line">def isApp = false</span><br><span class="line">if (isApp) &#123;</span><br><span class="line">    //可运行</span><br><span class="line">    apply plugin: &apos;com.android.application&apos;</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    //作为库</span><br><span class="line">    apply plugin: &apos;com.android.library&apos;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">defaultConfig &#123;</span><br><span class="line">    if (isApp) &#123;</span><br><span class="line">        applicationId &apos;com.cloud.filebundle&apos;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在src下新增debug目录，这样当打debug包时，该目录下的代码也会一起打包，当打release包时，则不会带上。这样也可方便把测试代码区分开。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBad903ad0ddc75d48b758b2d0664b3d43?method=download&amp;shareKey=e7087a218e722efbc5e1b84016fb82af" alt=""></p>
+<p>我们直接把FileFragment在DebugActivity中显示出来，运行情况如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB34c9bae2106ecb62a82ced05df862b59?method=download&amp;shareKey=259472e0c054c2d511a507096a228f69" alt=""></p>
+<p>完整代码示例见<a href="https://github.com/junbin1011/CloudDisk/commit/7ed0b1e3eff0d40708bcd60e5d0a34cd2b8f1f00" target="_blank" rel="noopener">Github</a></p>
+<h2 id="2-新增Debug工程用于调试"><a href="#2-新增Debug工程用于调试" class="headerlink" title="2. 新增Debug工程用于调试"></a>2. 新增Debug工程用于调试</h2><p>接下来我们通过DynamicBundle进行演示，新增一个module用于专门调试,这种做法的好处是测试代码完全隔离。</p>
+<p>新建名为DynamicDebug的Module，加上对于的依赖，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;com.cloud.disk:api:1.0.0&apos;</span><br><span class="line">implementation project(&apos;:dynamicBundle&apos;)</span><br></pre></td></tr></table></figure></p>
+<p>同样新增DebugActivity用于调试DynamicFragment。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBcc3ffadbe426a373939a81c16c388aae?method=download&amp;shareKey=2807899d9d699d2274bfce60e387e70e" alt=""></p>
+<p>但运行调试发现编译出错，具体的日志如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">error: [Dagger/MissingBinding] com.cloud.disk.api.file.TransferFile cannot be provided without an @Provides-annotated method.</span><br><span class="line"> public abstract static class ApplicationC implements DebugApplication_GeneratedInjector,</span><br><span class="line">                        ^</span><br><span class="line">     com.cloud.disk.api.file.TransferFile is injected at</span><br><span class="line">         com.cloud.disk.bundle.dynamic.DynamicFragment.transferFile</span><br><span class="line">     com.cloud.disk.bundle.dynamic.DynamicFragment is injected at</span><br><span class="line">         com.cloud.disk.bundle.dynamic.DynamicFragment_GeneratedInjector.injectDynamicFragment(com.cloud.disk.bundle.dynamic.DynamicFragment) [com.cloud.dynamicdebug.DebugApplication_HiltComponents.ApplicationC → com.cloud.dynamicdebug.DebugApplication_HiltComponents.ActivityRetainedC → com.cloud.dynamicdebug.DebugApplication_HiltComponents.ActivityC → com.cloud.dynamicdebug.DebugApplication_HiltComponents.FragmentC]</span><br><span class="line"> It is also requested at:</span><br><span class="line">     com.cloud.disk.bundle.dynamic.DynamicController.transferFile</span><br></pre></td></tr></table></figure>
+<p>因为DynamicBundle运行需要依赖TransferFile及UseState接口的实现，这个时候DynamicBundle我们独立调试，并没有将接口的实现加载进来。<strong>这个时候我们建议的做法是采用Mock，不再把具体的实现加载进来。</strong></p>
+<p>新增TransferFile及UseState的接口Mock如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">@Module</span><br><span class="line">@InstallIn(ActivityComponent.class)</span><br><span class="line">public abstract class MockFileModule &#123;</span><br><span class="line">    @Binds</span><br><span class="line">    public abstract TransferFile bindTransferFile(</span><br><span class="line">            MockTransferFileImpl transferFileImpl</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class MockTransferFileImpl implements TransferFile &#123;</span><br><span class="line">    @Inject</span><br><span class="line">    public MockTransferFileImpl() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public FileInfo upload(String s) &#123;</span><br><span class="line">        return new FileInfo();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public FileInfo download(String s) &#123;</span><br><span class="line">        return new FileInfo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">@Module</span><br><span class="line">@InstallIn(ActivityComponent.class)</span><br><span class="line">public abstract class MockUserModule &#123;</span><br><span class="line">    @Binds</span><br><span class="line">    public abstract UserState bindUserState(</span><br><span class="line">            MockUserStateImpl userStateImpl</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class MockUserStateImpl implements UserState &#123;</span><br><span class="line">    @Inject</span><br><span class="line">    public MockUserStateImpl() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String getUserId() &#123;</span><br><span class="line">        return &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean isLogin() &#123;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>增加mock后，编译正常，运行结果如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB907c6fd5efd1d47e1a418063ce4762d1?method=download&amp;shareKey=b3cdc5d2689eacc93193c4be84e18a74" alt=""></p>
+<p>完整代码示例见<a href="https://github.com/junbin1011/CloudDisk/commit/b868d2514aed69f1b6fab79e3a047ce8c5c63b2d" target="_blank" rel="noopener">Github</a></p>
+<h2 id="3-自动化测试"><a href="#3-自动化测试" class="headerlink" title="3. 自动化测试"></a>3. 自动化测试</h2><p>这是非常推荐的一种方式，可重复执行且反馈速度快。前面我们已经有一组冒烟测试的示例。接下来介绍对userBundle的UserCenterFragment进行测试，我们同样使用Robolectric提高反馈的速度。</p>
+<p>Gradle增加依赖配置，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">testImplementation &apos;junit:junit:4.13.2&apos;</span><br><span class="line">testImplementation &quot;com.google.truth:truth:1.0.1&quot;</span><br><span class="line">testImplementation &apos;com.tngtech.archunit:archunit-junit4:0.15.0&apos;</span><br><span class="line">testImplementation &apos;org.robolectric:robolectric:4.5.1&apos;</span><br><span class="line">testImplementation &apos;androidx.test:core:1.3.0&apos;</span><br><span class="line">testImplementation &apos;androidx.test.ext:junit:1.1.2&apos;</span><br><span class="line">testImplementation &apos;androidx.test.espresso:espresso-core:3.3.0&apos;</span><br><span class="line">testImplementation &apos;androidx.test.espresso:espresso-intents:3.3.0&apos;</span><br><span class="line">debugImplementation &quot;androidx.fragment:fragment-testing:1.3.0&quot;</span><br></pre></td></tr></table></figure></p>
+<p>编写测试用例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4.class)</span><br><span class="line">@LargeTest</span><br><span class="line">public class UserCenterFragmentTest &#123;</span><br><span class="line">    @Test</span><br><span class="line">    public void show_show_user_center_ui_when_click_tab_dynamic() &#123;</span><br><span class="line">        //given</span><br><span class="line">        FragmentScenario&lt;UserCenterFragment&gt; scenario = FragmentScenario.launchInContainer(UserCenterFragment.class);</span><br><span class="line">        scenario.onFragment(activity -&gt; &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;Hello user center fragment&quot;)).check(matches(isDisplayed()));</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行测试命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./gradlew userBundle:testDebug</span><br></pre></td></tr></table></figure></p>
+<p>运行结果如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBa90da1e952cae1f1f8a41a55936666c6?method=download&amp;shareKey=88839dde7bd30caf97515f567a1ef4a6" alt=""></p>
+<p>完整代码示例见<a href="https://github.com/junbin1011/CloudDisk/commit/e8439d74c113e6ef73ee12bd8c9893a853525e2a" target="_blank" rel="noopener">Github</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>经过了解耦、分库及编译调试的优化，一段时间内，CloudDisk的开发效率得到了很大的提升。</p>
+<p>但随着业务的演进，由于历史的原因，代码中存在很多Activity及Controller的上帝类。团队发现独立的业务Bundle质量还是比较差，Bug也比较多。团队决定再次对模块类的代码进行优化重构，采用新的MVP、MVVM架构将数据及视图分离。</p>
+<p>下一篇，移动应用遗留系统重构（13）- MVP重构示例篇，一镜到底，我们将通过视频及文章的方式进行演示。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/遗留系统重构/" rel="tag"># 遗留系统重构</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/06/15/移动应用遗留系统重构（11）-制品管理篇/" rel="next" title="移动应用遗留系统重构（11）- 制品管理篇">
+                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（11）- 制品管理篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/06/17/移动应用遗留系统重构（12）-编译调试篇/" data-title="移动应用遗留系统重构（12）- 编译调试篇" data-url="https://junbin1011.github.io/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f" alt="黄俊彬">
+          <p class="site-author-name" itemprop="name">黄俊彬</p>
+           
+              <p class="site-description motion-element" itemprop="description">一花一世界，一码一浮生</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">94</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junbin1011" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" title="zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#调试方式"><span class="nav-number">2.</span> <span class="nav-text">调试方式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-支持Lib及Application切换"><span class="nav-number">2.1.</span> <span class="nav-text">1. 支持Lib及Application切换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-新增Debug工程用于调试"><span class="nav-number">2.2.</span> <span class="nav-text">2. 新增Debug工程用于调试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-自动化测试"><span class="nav-number">2.3.</span> <span class="nav-text">3. 自动化测试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CloudDisk示例代码"><span class="nav-number">4.</span> <span class="nav-text">CloudDisk示例代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">5.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">6.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">7.</span> <span class="nav-text">关于</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">黄俊彬</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"junbin"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
