@@ -1,0 +1,850 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="遗留系统重构,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="前言上一篇移动应用遗留系统重构（12）- 编译调试篇介绍，经过了解耦、分库及编译调试的优化，一段时间内，CloudDisk的开发效率得到了很大的提升。 但随着业务的演进，由于历史的原因，代码中存在很多Activity及Controller的上帝类。今天我们将拿File Bundle作为例子，为大家总结重构的流程，演示如何一步一步将上帝类重构演化为MVP架构。 视频演示地址: https://mp.">
+<meta name="keywords" content="遗留系统重构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动应用遗留系统重构（13）- MVP重构示例篇">
+<meta property="og:url" content="https://junbin1011.github.io/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/index.html">
+<meta property="og:site_name" content="JunBin">
+<meta property="og:description" content="前言上一篇移动应用遗留系统重构（12）- 编译调试篇介绍，经过了解耦、分库及编译调试的优化，一段时间内，CloudDisk的开发效率得到了很大的提升。 但随着业务的演进，由于历史的原因，代码中存在很多Activity及Controller的上帝类。今天我们将拿File Bundle作为例子，为大家总结重构的流程，演示如何一步一步将上帝类重构演化为MVP架构。 视频演示地址: https://mp.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB35e7a645210febdfcdd0128513e7e99a?method=download&shareKey=d85ce28627621acfbf824411296471cb">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB3ed18d4895f56ea4bd63edb07bad1ebb?method=download&shareKey=9866d947d7c8cc33cf4c0f281ecb594c">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB2b366b7e072c92fb0690c2566ddf10a4?method=download&shareKey=92b33d82fb51a71726529c783b9c736c">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB063f4dc76efadbe40d7237dee658789c?method=download&shareKey=13d6cb5293d2a24ae4baf68faf451f4a">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB86d045ecd69b94b80d506b5650f654da?method=download&shareKey=94a3c10d2650745ed2a43cac6b9b4844">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB3302856f2173afb539302fd0984d486c?method=download&shareKey=a629e50540002ea88b95a7e22b8dba05">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBb009be62841a634f0ff0d53a8ff079ad?method=download&shareKey=ac5814fe21a5edc573a553b26019e40a">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBa09296d62bd00f5198a775dbccba6842?method=download&shareKey=732250036f72eb8c663f5950617d8b72">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
+<meta property="og:updated_time" content="2021-06-20T13:53:09.507Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动应用遗留系统重构（13）- MVP重构示例篇">
+<meta name="twitter:description" content="前言上一篇移动应用遗留系统重构（12）- 编译调试篇介绍，经过了解耦、分库及编译调试的优化，一段时间内，CloudDisk的开发效率得到了很大的提升。 但随着业务的演进，由于历史的原因，代码中存在很多Activity及Controller的上帝类。今天我们将拿File Bundle作为例子，为大家总结重构的流程，演示如何一步一步将上帝类重构演化为MVP架构。 视频演示地址: https://mp.">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB35e7a645210febdfcdd0128513e7e99a?method=download&shareKey=d85ce28627621acfbf824411296471cb">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://junbin1011.github.io/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/">
+
+
+
+
+
+  <title> 移动应用遗留系统重构（13）- MVP重构示例篇 | JunBin </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b3ffb4912eee79c795100275f268095c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JunBin</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">一花一世界，一码一浮生</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                移动应用遗留系统重构（13）- MVP重构示例篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-20T21:47:56+08:00">
+                2021-06-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a><br>介绍，经过了解耦、分库及编译调试的优化，一段时间内，CloudDisk的开发效率得到了很大的提升。</p>
+<p>但随着业务的演进，由于历史的原因，代码中存在很多Activity及Controller的上帝类。今天我们将拿File Bundle作为例子，为大家总结重构的流程，演示如何一步一步将上帝类重构演化为MVP架构。</p>
+<p><strong>视频演示地址:</strong> <a href="https://mp.weixin.qq.com/s/zjeln_eqAN45CDbSrWjLaA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/zjeln_eqAN45CDbSrWjLaA</a></p>
+<h1 id="重构流程"><a href="#重构流程" class="headerlink" title="重构流程"></a>重构流程</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">A(1.梳理业务逻辑)--&gt;B(2.分析原有的代码设计)</span><br><span class="line">B--&gt;C(3.补充守护测试)</span><br><span class="line">C--&gt;D(4.简单设计)</span><br><span class="line">D--&gt;E(5.小步安全重构)</span><br><span class="line">E--&gt;F(6.集成验收测试)</span><br></pre></td></tr></table></figure>
+<h2 id="1-梳理业务逻辑"><a href="#1-梳理业务逻辑" class="headerlink" title="1. 梳理业务逻辑"></a>1. 梳理业务逻辑</h2><p>通过往往这一步是最难的。由于人员更迭、产品的迭代，给这一步带来很大的挑战。我们可以尝试从一下几方面来补全信息。</p>
+<ol>
+<li>找人：产品经理、设计人员、测试人员进行确认和答疑</li>
+<li>找文档：查看原有的需求文档、设计文档、测试用例、设计稿</li>
+<li>看代码：从原有的代码设计中去梳理业务</li>
+</ol>
+<p>经过梳理确认，File Bundle的现有的业务如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">A(进入文件页面)--&gt;B(从网络加载文件列表数据)</span><br><span class="line">B --&gt; C&#123;数据是否加载成功&#125;</span><br><span class="line">C --&gt;|加载成功| D(显示文件列表-文件名和文件大小)</span><br><span class="line">C --&gt;|网络异常| E(显示NetworkErrorException)</span><br><span class="line">C --&gt;|数据为空| F(显示empty data)</span><br><span class="line">E --&gt;|点击触发刷新|B</span><br><span class="line">F --&gt;|点击触发刷新|B</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>文件大小转换为以B、K、M、G单位显示</p>
+</blockquote>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB35e7a645210febdfcdd0128513e7e99a?method=download&amp;shareKey=d85ce28627621acfbf824411296471cb" alt=""></p>
+<h2 id="2-分析原有的代码设计"><a href="#2-分析原有的代码设计" class="headerlink" title="2.分析原有的代码设计"></a>2.分析原有的代码设计</h2><p>我们以主要上帝类FileFragment为例，代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">@AndroidEntryPoint</span><br><span class="line">public class FileFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    FileController fileController;</span><br><span class="line"></span><br><span class="line">    private RecyclerView fileListRecycleView;</span><br><span class="line">    private TextView tvMessage;</span><br><span class="line"></span><br><span class="line">    public static FileFragment newInstance() &#123;</span><br><span class="line">        FileFragment fragment = new FileFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public View onCreateView(LayoutInflater inflater, ViewGroup container,</span><br><span class="line">                             Bundle savedInstanceState) &#123;</span><br><span class="line"></span><br><span class="line">        View view = inflater.inflate(R.layout.fragment_file, container, false);</span><br><span class="line">        fileListRecycleView = view.findViewById(R.id.file_list);</span><br><span class="line">        tvMessage = view.findViewById(R.id.tv_message);</span><br><span class="line">        tvMessage.setOnClickListener(v -&gt; getFileList());</span><br><span class="line">        return view;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        getFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void getFileList() &#123;</span><br><span class="line">        new Thread(() -&gt; &#123;</span><br><span class="line">            Message message = new Message();</span><br><span class="line">            try &#123;</span><br><span class="line">                List&lt;FileInfo&gt; infoList = fileController.getFileList();</span><br><span class="line">                message.what = 1;</span><br><span class="line">                message.obj = infoList;</span><br><span class="line">            &#125; catch (NetworkErrorException e) &#123;</span><br><span class="line">                message.what = 0;</span><br><span class="line">                message.obj = &quot;NetworkErrorException&quot;;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            mHandler.sendMessage(message);</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Handler mHandler = new Handler(new Handler.Callback() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public boolean handleMessage(@NonNull Message msg) &#123;</span><br><span class="line">            if (msg.what == 1) &#123;</span><br><span class="line">                showTip(false);</span><br><span class="line">                //显示网络数据</span><br><span class="line">                List&lt;FileInfo&gt; infoList = (List&lt;FileInfo&gt;) msg.obj;</span><br><span class="line">                FileListAdapter fileListAdapter = new FileListAdapter(infoList, getActivity());</span><br><span class="line">                fileListRecycleView.addItemDecoration(new DividerItemDecoration(</span><br><span class="line">                        getActivity(), DividerItemDecoration.VERTICAL));</span><br><span class="line">                //设置布局显示格式</span><br><span class="line">                fileListRecycleView.setLayoutManager(new LinearLayoutManager(getActivity()));</span><br><span class="line">                fileListRecycleView.setAdapter(fileListAdapter);</span><br><span class="line">            &#125; else if (msg.what == 0) &#123;</span><br><span class="line">                showTip(true);</span><br><span class="line">                //显示异常提醒数据</span><br><span class="line">                tvMessage.setText(msg.obj.toString());</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                showTip(true);</span><br><span class="line">                //显示空数据</span><br><span class="line">                tvMessage.setText(&quot;empty data&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    public void showTip(boolean show) &#123;</span><br><span class="line">        if (show) &#123;</span><br><span class="line">            tvMessage.setVisibility(View.VISIBLE);</span><br><span class="line">            fileListRecycleView.setVisibility(View.GONE);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            tvMessage.setVisibility(View.GONE);</span><br><span class="line">            fileListRecycleView.setVisibility(View.VISIBLE);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>从代码中我们可以看到主要的一些设计问题，如下：</p>
+<ol>
+<li>主要的获取文件、异常逻辑判断、界面刷新控制都是在一个类里面，不利于后续的扩张及修改维护。我们希望类的职责更加单一，逻辑和视图能够进行分离。</li>
+<li>存在粗暴的new Thread进行管理</li>
+<li>Handler 存在内存泄露风险</li>
+<li>存在规范问题，例如empty data字符串没有使用xml进行管理、代码中由无效的导包等</li>
+<li>代码中没有任何守护测试</li>
+</ol>
+<p>完整的所有代码见<a href="https://github.com/junbin1011/CloudDisk/commit/3c4c4d98bcef46357f4c653431dc53e6d691e397" target="_blank" rel="noopener">Github</a></p>
+<h2 id="3-补充守护测试"><a href="#3-补充守护测试" class="headerlink" title="3. 补充守护测试"></a>3. 补充守护测试</h2><p>参考重构篇中，我们制定的策略，我们可以先做大型的测试，做为守护测试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4.class)</span><br><span class="line">@LargeTest</span><br><span class="line">@HiltAndroidTest</span><br><span class="line">@Config(application = HiltTestApplication.class)</span><br><span class="line">public class FileFragmentTest &#123;</span><br><span class="line"></span><br><span class="line">    @Rule</span><br><span class="line">    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void show_show_file_list_when_get_success() &#123;</span><br><span class="line">        //given</span><br><span class="line">        ActivityScenario&lt;DebugActivity&gt; scenario = ActivityScenario.launch(DebugActivity.class);</span><br><span class="line">        scenario.onActivity(activity -&gt; &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;遗留代码重构.pdf&quot;)).check(matches(isDisplayed()));</span><br><span class="line">            onView(withText(&quot;100.00K&quot;)).check(matches(isDisplayed()));</span><br><span class="line">            onView(withText(&quot;系统组件化.pdf&quot;)).check(matches(isDisplayed()));</span><br><span class="line">            onView(withText(&quot;9.67K&quot;)).check(matches(isDisplayed()));</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>我们发现这个用不会通过，我们主要面临一下2个问题。</strong></p>
+<ol>
+<li>网络请求是异步的，异步逻辑可能在测试执行完还没有触发到</li>
+<li>网络数据是动态的，我们断言的数据没办法确定</li>
+</ol>
+<p>所以我们采用的做法就是Mock，我不稳定的依赖Mock掉。我们同样使用Shadow来进行多获取网络数据方法进行Mock，代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">@Implements(FileFragment.class)</span><br><span class="line">public class ShadowFileFragment &#123;</span><br><span class="line"></span><br><span class="line">    @RealObject</span><br><span class="line">    public FileFragment fileFragment;</span><br><span class="line"></span><br><span class="line">    enum State &#123;</span><br><span class="line">        SUCCESS,</span><br><span class="line">        ERROR,</span><br><span class="line">        EMPTY</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static State state = State.SUCCESS;</span><br><span class="line"></span><br><span class="line">    @Implementation</span><br><span class="line">    protected void getFileList() &#123;</span><br><span class="line">        System.out.println(&quot;shadow .... .....&quot;);</span><br><span class="line">        Message message = new Message();</span><br><span class="line">        if (state == State.SUCCESS) &#123;</span><br><span class="line">            ArrayList&lt;FileInfo&gt; infoList = new ArrayList&lt;&gt;();</span><br><span class="line">            infoList.add(new FileInfo(&quot;遗留代码重构.pdf&quot;, 102400));</span><br><span class="line">            infoList.add(new FileInfo(&quot;系统组件化.pdf&quot;, 9900));</span><br><span class="line">            message.what = 1;</span><br><span class="line">            message.obj = infoList;</span><br><span class="line">        &#125; else if (state == State.ERROR) &#123;</span><br><span class="line">            message.what = 0;</span><br><span class="line">            message.obj = &quot;NetworkErrorException&quot;;</span><br><span class="line">        &#125; else if (state == State.EMPTY) &#123;</span><br><span class="line">            message.what = 1;</span><br><span class="line">            message.obj = null;</span><br><span class="line">        &#125;</span><br><span class="line">        fileFragment.mHandler.sendMessage(message);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>调整后的测试用例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">   public void show_show_file_list_when_get_success() &#123;</span><br><span class="line">       //given</span><br><span class="line">       ShadowFileFragment.state = ShadowFileFragment.State.SUCCESS;</span><br><span class="line">       //when</span><br><span class="line">       ActivityScenario&lt;DebugActivity&gt; scenario = ActivityScenario.launch(DebugActivity.class);</span><br><span class="line">       scenario.onActivity(activity -&gt; &#123;</span><br><span class="line">           //then</span><br><span class="line">           onView(withText(&quot;遗留代码重构.pdf&quot;)).check(matches(isDisplayed()));</span><br><span class="line">           onView(withText(&quot;100.00K&quot;)).check(matches(isDisplayed()));</span><br><span class="line">           onView(withText(&quot;系统组件化.pdf&quot;)).check(matches(isDisplayed()));</span><br><span class="line">           onView(withText(&quot;9.67K&quot;)).check(matches(isDisplayed()));</span><br><span class="line">       &#125;);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   @Test</span><br><span class="line">   public void show_show_error_tip_when_net_work_exception() &#123;</span><br><span class="line">       //given</span><br><span class="line">       ShadowFileFragment.state = ShadowFileFragment.State.ERROR;</span><br><span class="line">       //when</span><br><span class="line">       ActivityScenario&lt;DebugActivity&gt; scenario = ActivityScenario.launch(DebugActivity.class);</span><br><span class="line">       scenario.onActivity(activity -&gt; &#123;</span><br><span class="line">           //then</span><br><span class="line">           onView(withText(&quot;NetworkErrorException&quot;)).check(matches(isDisplayed()));</span><br><span class="line">       &#125;);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   @Test</span><br><span class="line">   public void show_show_empty_tip_when_not_has_data() &#123;</span><br><span class="line">       //given</span><br><span class="line">       ShadowFileFragment.state = ShadowFileFragment.State.EMPTY;</span><br><span class="line">       //when</span><br><span class="line">       ActivityScenario&lt;DebugActivity&gt; scenario = ActivityScenario.launch(DebugActivity.class);</span><br><span class="line">       scenario.onActivity(activity -&gt; &#123;</span><br><span class="line">           //then</span><br><span class="line">           onView(withText(&quot;empty data&quot;)).check(matches(isDisplayed()));</span><br><span class="line">       &#125;);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>中间我们用允许测试脚步时发现，之前的旧代码还有一处逻辑的错误。数据为空的判断应该加在网络数据回调中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Caused by: java.lang.NullPointerException</span><br><span class="line">	at com.cloud.disk.bundle.file.FileFragment$1.handleMessage(FileFragment.java:96)</span><br><span class="line">	at android.os.Handler.dispatchMessage(Handler.java:102)</span><br></pre></td></tr></table></figure>
+<p>我们同步将异常逻辑进行修改，如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3ed18d4895f56ea4bd63edb07bad1ebb?method=download&amp;shareKey=9866d947d7c8cc33cf4c0f281ecb594c" alt=""></p>
+<p>最后我们完成了基本的守护测试，运行结果如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB2b366b7e072c92fb0690c2566ddf10a4?method=download&amp;shareKey=92b33d82fb51a71726529c783b9c736c" alt=""></p>
+<p>完整的所有代码见<a href="https://github.com/junbin1011/CloudDisk/commit/3c4c4d98bcef46357f4c653431dc53e6d691e397" target="_blank" rel="noopener">Github</a></p>
+<h2 id="4-简单设计"><a href="#4-简单设计" class="headerlink" title="4. 简单设计"></a>4. 简单设计</h2><h3 id="MVP架构"><a href="#MVP架构" class="headerlink" title="MVP架构"></a>MVP架构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">B(Presenter)--&gt;A(Model)</span><br><span class="line">B--&gt;|interface|C(View)</span><br><span class="line">C--&gt;|interface|B</span><br></pre></td></tr></table></figure>
+<ol>
+<li>业务逻辑和视图分离</li>
+<li>Presenter和View之间通过接口交互</li>
+<li>为了更高效管理线程，团队决定使用Rxjava进行线程统一管理。架构风格参考<a href="https://github.com/android/architecture-samples" target="_blank" rel="noopener">architecture-samples</a></li>
+</ol>
+<h3 id="接口设计"><a href="#接口设计" class="headerlink" title="接口设计"></a>接口设计</h3><ol>
+<li>Contract接口设计</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public interface FileListContract &#123;</span><br><span class="line"></span><br><span class="line">    interface View  &#123;</span><br><span class="line">        showFileList(List&lt;FileInfo&gt; fileList);</span><br><span class="line">        showNetWorkException(String errorMessage);</span><br><span class="line">        showEmptyData();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    interface Presenter &#123;</span><br><span class="line"></span><br><span class="line">        void getFileList();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>数据接口设计</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public interface FileDataSource &#123;</span><br><span class="line">     Flowable&lt;List&lt;FileInfo&gt;&gt; getFileList();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="5-小步安全重构"><a href="#5-小步安全重构" class="headerlink" title="5.小步安全重构"></a>5.小步安全重构</h2><ul>
+<li>抽取FileFragment的业务逻辑到FilePresenter</li>
+<li>FileFragment 提取UI接口</li>
+<li>抽取FileDataSource</li>
+</ul>
+<blockquote>
+<p>重构手法包含提取接口、移动方法、移动类、抽取方法、内联、提取变量等等。<strong>过程还需要根据重构适当调整测试用例。</strong></p>
+</blockquote>
+<p>详细的演示见<a href="https://mp.weixin.qq.com/s/zjeln_eqAN45CDbSrWjLaA" target="_blank" rel="noopener">视频</a></p>
+<ul>
+<li>补充测试用例</li>
+</ul>
+<ol>
+<li>补充FileUtils计算文件大小测试</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(JUnit4.class)</span><br><span class="line">@SmallTest</span><br><span class="line">public class FileUtilsTest &#123;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_return_B_unit_when_file_size_in_its_range() &#123;</span><br><span class="line">        //given</span><br><span class="line">        long fileSize = 100;</span><br><span class="line">        //when</span><br><span class="line">        String format = FileUtils.formatFileSize(fileSize);</span><br><span class="line">        //then</span><br><span class="line">        assertEquals(&quot;100.00B&quot;, format);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_return_K_unit_when_file_size_in_its_range() &#123;</span><br><span class="line">        //given</span><br><span class="line">        long fileSize = 1034;</span><br><span class="line">        //when</span><br><span class="line">        String format = FileUtils.formatFileSize(fileSize);</span><br><span class="line">        //then</span><br><span class="line">        assertEquals(&quot;1.01K&quot;, format);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_return_M_unit_when_file_size_in_its_range() &#123;</span><br><span class="line">        //given</span><br><span class="line">        long fileSize = 1084000;</span><br><span class="line">        //when</span><br><span class="line">        String format = FileUtils.formatFileSize(fileSize);</span><br><span class="line">        //then</span><br><span class="line">        assertEquals(&quot;1.03M&quot;, format);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_return_G_unit_when_file_size_in_its_range() &#123;</span><br><span class="line">        //given</span><br><span class="line">        long fileSize = 1114000000;</span><br><span class="line">        //when</span><br><span class="line">        String format = FileUtils.formatFileSize(fileSize);</span><br><span class="line">        //then</span><br><span class="line">        assertEquals(&quot;1.04G&quot;, format);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>补充Presenter业务逻辑测试</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(JUnit4.class)</span><br><span class="line">@MediumTest</span><br><span class="line">public class FilePresenterImplTest &#123;</span><br><span class="line"></span><br><span class="line">    @Rule</span><br><span class="line">    public RxSchedulerRule rule = new RxSchedulerRule();</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_return_file_list_when_call_data_source_success() throws NetworkErrorException &#123;</span><br><span class="line">        //given</span><br><span class="line">        FileListContract.View mockView = mock(FileListContract.View.class);</span><br><span class="line">        FileDataSource mockFileDataSource = mock(FileDataSource.class);</span><br><span class="line">        List&lt;FileInfo&gt; fileList = new ArrayList&lt;&gt;();</span><br><span class="line">        fileList.add(new FileInfo(&quot;遗留代码重构.pdf&quot;, 102400));</span><br><span class="line">        fileList.add(new FileInfo(&quot;系统组件化.pdf&quot;, 9900));</span><br><span class="line">        when(mockFileDataSource.getFileList()).thenReturn(Flowable.fromArray(fileList));</span><br><span class="line">        FileListContract.FilePresenter filePresenter = new FilePresenterImpl(mockFileDataSource, mockView);</span><br><span class="line">        //when</span><br><span class="line">        filePresenter.getFileList();</span><br><span class="line">        //then</span><br><span class="line">        verify(mockView).showFileList(anyList());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_show_empty_data_when_call_data_source_return_empty() throws NetworkErrorException &#123;</span><br><span class="line">        //given</span><br><span class="line">        FileListContract.View mockView = mock(FileListContract.View.class);</span><br><span class="line">        FileDataSource mockFileDataSource = mock(FileDataSource.class);</span><br><span class="line">        when(mockFileDataSource.getFileList()).thenReturn(Flowable.fromArray(new ArrayList&lt;&gt;()));</span><br><span class="line">        FileListContract.FilePresenter filePresenter = new FilePresenterImpl(mockFileDataSource, mockView);</span><br><span class="line">        //when</span><br><span class="line">        filePresenter.getFileList();</span><br><span class="line">        //then</span><br><span class="line">        verify(mockView).showEmptyData();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void should_show_network_exception_when_call_data_source_return_net_error() throws NetworkErrorException &#123;</span><br><span class="line">        //given</span><br><span class="line">        FileListContract.View mockView = mock(FileListContract.View.class);</span><br><span class="line">        FileDataSource mockFileDataSource = mock(FileDataSource.class);</span><br><span class="line">        when(mockFileDataSource.getFileList()).thenThrow(new NetworkErrorException());</span><br><span class="line">        FileListContract.FilePresenter filePresenter = new FilePresenterImpl(mockFileDataSource, mockView);</span><br><span class="line">        //when</span><br><span class="line">        filePresenter.getFileList();</span><br><span class="line">        //then</span><br><span class="line">        verify(mockView).showNetWorkException(&quot;NetworkErrorException&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以通过查看Coverage查看逻辑的覆盖情况，判断是否有重要的逻辑遗漏。</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB063f4dc76efadbe40d7237dee658789c?method=download&amp;shareKey=13d6cb5293d2a24ae4baf68faf451f4a" alt=""></p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB86d045ecd69b94b80d506b5650f654da?method=download&amp;shareKey=94a3c10d2650745ed2a43cac6b9b4844" alt=""></p>
+<p>最后我们运行file bundle所有的测试，报告如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3302856f2173afb539302fd0984d486c?method=download&amp;shareKey=a629e50540002ea88b95a7e22b8dba05" alt=""></p>
+<h2 id="6-集成验收测试"><a href="#6-集成验收测试" class="headerlink" title="6.集成验收测试"></a>6.集成验收测试</h2><ol>
+<li>file bundle模块发布1.0.1版本</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;com.cloud.disk.bundle:file:1.0.1&apos;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>执行守护测试</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBb009be62841a634f0ff0d53a8ff079ad?method=download&amp;shareKey=ac5814fe21a5edc573a553b26019e40a" alt=""></p>
+<ol start="3">
+<li>运行检查</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBa09296d62bd00f5198a775dbccba6842?method=download&amp;shareKey=732250036f72eb8c663f5950617d8b72" alt=""></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇介绍了文件模块团队将文件主页重构为MVP架构，并且补充了自动化测试。经过重构后，团队的开发效率和版本质量有了明显的提升。有了文件模块的打样，给其他团队带来了很大的信心。</p>
+<p>接下来，我们将继续分享动态模块的重构之旅。与文件模块不一样的是动态模块决定采用Kotlin+MVVM架构。</p>
+<p>下一篇，单体移动应用“模块化”演进之旅（14）- Kotlin+MVVM重构示例篇</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<p><a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/遗留系统重构/" rel="tag"># 遗留系统重构</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/06/17/移动应用遗留系统重构（12）-编译调试篇/" rel="next" title="移动应用遗留系统重构（12）- 编译调试篇">
+                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（12）- 编译调试篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/" data-title="移动应用遗留系统重构（13）- MVP重构示例篇" data-url="https://junbin1011.github.io/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f" alt="黄俊彬">
+          <p class="site-author-name" itemprop="name">黄俊彬</p>
+           
+              <p class="site-description motion-element" itemprop="description">一花一世界，一码一浮生</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">95</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junbin1011" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" title="zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重构流程"><span class="nav-number">2.</span> <span class="nav-text">重构流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-梳理业务逻辑"><span class="nav-number">2.1.</span> <span class="nav-text">1. 梳理业务逻辑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-分析原有的代码设计"><span class="nav-number">2.2.</span> <span class="nav-text">2.分析原有的代码设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-补充守护测试"><span class="nav-number">2.3.</span> <span class="nav-text">3. 补充守护测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-简单设计"><span class="nav-number">2.4.</span> <span class="nav-text">4. 简单设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MVP架构"><span class="nav-number">2.4.1.</span> <span class="nav-text">MVP架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接口设计"><span class="nav-number">2.4.2.</span> <span class="nav-text">接口设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-小步安全重构"><span class="nav-number">2.5.</span> <span class="nav-text">5.小步安全重构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-集成验收测试"><span class="nav-number">2.6.</span> <span class="nav-text">6.集成验收测试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CloudDisk示例代码"><span class="nav-number">4.</span> <span class="nav-text">CloudDisk示例代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">5.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">6.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">7.</span> <span class="nav-text">关于</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">黄俊彬</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"junbin"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
