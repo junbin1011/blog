@@ -271,6 +271,253 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/24/移动应用遗留系统重构（14）-Kotlin-MVVM重构示例篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/06/24/移动应用遗留系统重构（14）-Kotlin-MVVM重构示例篇/" itemprop="url">
+                  移动应用遗留系统重构（14）- Kotlin+MVVM重构示例篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-24T20:42:55+08:00">
+                2021-06-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/24/移动应用遗留系统重构（14）-Kotlin-MVVM重构示例篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/24/移动应用遗留系统重构（14）-Kotlin-MVVM重构示例篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）-MVP重构示例篇</a>介绍了文件模块团队将文件主页重构为MVP架构，并且补充了自动化测试。经过重构后，团队的开发效率和版本质量有了明显的提升。动态模块的业务比文件模块更复杂，并且这次团队决定使用新的开发语言Kotlin及MVVM架构。</p>
+<p>本篇我们将拿DynamicBundle作为例子，为大家继续演示如何从Java代码过渡为Kotlin代码，以及如何一步一步将上帝类重构演化为MVVM架构。</p>
+<p><strong>视频演示地址:</strong> <a href="https://mp.weixin.qq.com/s/vex4Kn6Ts-dI3KX2Yiuq6w" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/vex4Kn6Ts-dI3KX2Yiuq6w</a></p>
+<h1 id="重构流程"><a href="#重构流程" class="headerlink" title="重构流程"></a>重构流程</h1><p>从新回忆下上一篇我们分析的重构流程，对于转Kotlin语言，我们建议也做完至第3步，有了守护测试再进行转换，这样更加安全。流程如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">A(1.梳理业务逻辑)--&gt;B(2.分析原有的代码设计)</span><br><span class="line">B--&gt;C(3.补充守护测试)</span><br><span class="line">C--&gt;D(4.简单设计)</span><br><span class="line">D--&gt;E(5.小步安全重构)</span><br><span class="line">E--&gt;F(6.集成验收测试)</span><br></pre></td></tr></table></figure>
+<h2 id="1-梳理业务逻辑"><a href="#1-梳理业务逻辑" class="headerlink" title="1. 梳理业务逻辑"></a>1. 梳理业务逻辑</h2><p>上篇提到我们可以尝试从一下几方面来补全信息。</p>
+<ol>
+<li>找人：产品经理、设计人员、测试人员进行确认和答疑</li>
+<li>找文档：查看原有的需求文档、设计文档、测试用例、设计稿</li>
+<li>看代码：从原有的代码设计中去梳理业务</li>
+</ol>
+<p>经过梳理确认，FileBundle的现有的业务如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">A(进入动态页面)--&gt;B(从网络加载动态列表数据)</span><br><span class="line">B --&gt; C&#123;数据是否加载成功&#125;</span><br><span class="line">C --&gt;|加载成功| D(显示动态列表-内容和日期)</span><br><span class="line">C --&gt;|网络异常| E&#123;是否存在本地缓存数据&#125;</span><br><span class="line">C --&gt;|数据为空| F(显示empty data)</span><br><span class="line">E --&gt;|存在缓存数据|D</span><br><span class="line">E --&gt;|不存在缓存数据|G(显示NetworkErrorException)</span><br><span class="line">F --&gt;|点击触发刷新|B</span><br><span class="line">G --&gt;|点击触发刷新|B</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>时间转换为 yyyy-MM-dd HH:mm:ss 显示</p>
+</blockquote>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB65cd0c69aad3249af7aba469f24b7747?method=download&amp;shareKey=d9c2c3005a459ecdec928d81648eedb9" alt=""></p>
+<h2 id="2-分析原有的代码设计"><a href="#2-分析原有的代码设计" class="headerlink" title="2.分析原有的代码设计"></a>2.分析原有的代码设计</h2><p>我们以主要上帝类DynamicFragment为例，代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line">@Route(path = &quot;/dynamicBundle/dynamic&quot;)</span><br><span class="line">@AndroidEntryPoint</span><br><span class="line">public class DynamicFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    DynamicController dynamicController;</span><br><span class="line">    Button btnUpload;</span><br><span class="line">    @Inject</span><br><span class="line">    TransferFile transferFile;</span><br><span class="line"></span><br><span class="line">    private RecyclerView dynamicListRecycleView;</span><br><span class="line">    private TextView tvMessage;</span><br><span class="line"></span><br><span class="line">    public static DynamicFragment newInstance() &#123;</span><br><span class="line">        DynamicFragment fragment = new DynamicFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public View onCreateView(LayoutInflater inflater, ViewGroup container,</span><br><span class="line">                             Bundle savedInstanceState) &#123;</span><br><span class="line">        View view = inflater.inflate(R.layout.fragment_dynamic, container, false);</span><br><span class="line">        btnUpload = view.findViewById(R.id.btn_upload);</span><br><span class="line">        btnUpload.setOnClickListener(v -&gt; uploadDynamic());</span><br><span class="line">        dynamicListRecycleView = view.findViewById(R.id.file_list);</span><br><span class="line">        tvMessage = view.findViewById(R.id.tv_message);</span><br><span class="line">        tvMessage.setOnClickListener(v -&gt; getDynamicList());</span><br><span class="line">        getDynamicList();</span><br><span class="line">        return view;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void uploadDynamic() &#123;</span><br><span class="line">        //上传文件</span><br><span class="line">        FileInfo fileInfo = transferFile.upload(&quot;/data/data/user.png&quot;);</span><br><span class="line">        dynamicController.post(new Dynamic(0, &quot;第一个动态&quot;, System.currentTimeMillis()), fileInfo);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void getDynamicList() &#123;</span><br><span class="line">        new Thread(() -&gt; &#123;</span><br><span class="line">            Message message = new Message();</span><br><span class="line">            try &#123;</span><br><span class="line">                List&lt;Dynamic&gt; dynamicList = dynamicController.getDynamicList();</span><br><span class="line">                message.what = 1;</span><br><span class="line">                message.obj = dynamicList;</span><br><span class="line">            &#125; catch (NetworkErrorException e) &#123;</span><br><span class="line">                message.what = 0;</span><br><span class="line">                message.obj = &quot;NetworkErrorException&quot;;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            mHandler.sendMessage(message);</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Handler mHandler = new Handler(new Handler.Callback() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public boolean handleMessage(@NonNull Message msg) &#123;</span><br><span class="line">            if (msg.what == 1) &#123;</span><br><span class="line">                showTip(false);</span><br><span class="line">                //显示网络数据</span><br><span class="line">                List&lt;Dynamic&gt; dynamicList = (List&lt;Dynamic&gt;) msg.obj;</span><br><span class="line">                if (dynamicList == null || dynamicList.size() == 0) &#123;</span><br><span class="line">                    showTip(true);</span><br><span class="line">                    //显示空数据</span><br><span class="line">                    tvMessage.setText(&quot;empty data&quot;);</span><br><span class="line"></span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    DynamicListAdapter fileListAdapter = new DynamicListAdapter(dynamicList, getActivity());</span><br><span class="line">                    dynamicListRecycleView.addItemDecoration(new DividerItemDecoration(</span><br><span class="line">                            getActivity(), DividerItemDecoration.VERTICAL));</span><br><span class="line">                    //设置布局显示格式</span><br><span class="line">                    dynamicListRecycleView.setLayoutManager(new LinearLayoutManager(getActivity()));</span><br><span class="line">                    dynamicListRecycleView.setAdapter(fileListAdapter);</span><br><span class="line">                    //从网络中更新到数据保持到缓存之中</span><br><span class="line">                    dynamicController.saveDynamicToCache(dynamicList);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (msg.what == 0) &#123;</span><br><span class="line">                //尝试从缓存中读取数据</span><br><span class="line">                List&lt;Dynamic&gt; dynamicList = dynamicController.getDynamicListFromCache();</span><br><span class="line">                if (dynamicList == null || dynamicList.size() == 0) &#123;</span><br><span class="line">                    showTip(true);</span><br><span class="line">                    //显示异常提醒数据</span><br><span class="line">                    tvMessage.setText(msg.obj.toString());</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    DynamicListAdapter fileListAdapter = new DynamicListAdapter(dynamicList, getActivity());</span><br><span class="line">                    dynamicListRecycleView.addItemDecoration(new DividerItemDecoration(</span><br><span class="line">                            getActivity(), DividerItemDecoration.VERTICAL));</span><br><span class="line">                    //设置布局显示格式</span><br><span class="line">                    dynamicListRecycleView.setLayoutManager(new LinearLayoutManager(getActivity()));</span><br><span class="line">                    dynamicListRecycleView.setAdapter(fileListAdapter);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    public void showTip(boolean show) &#123;</span><br><span class="line">        if (show) &#123;</span><br><span class="line">            tvMessage.setVisibility(View.VISIBLE);</span><br><span class="line">            dynamicListRecycleView.setVisibility(View.GONE);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            tvMessage.setVisibility(View.GONE);</span><br><span class="line">            dynamicListRecycleView.setVisibility(View.VISIBLE);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>从代码中我们可以看到主要的一些设计问题，如下：</p>
+<ol>
+<li>主要的获取动态列表、异常逻辑判断、数据缓存判断、界面刷新控制都是在一个类里面，不利于后续的扩张及修改维护。我们希望类的职责更加单一，逻辑和视图能够进行分离。</li>
+<li>存在粗暴的new Thread进行管理</li>
+<li>Handler 存在内存泄露风险</li>
+<li>存在重复代码，例如列表数据的展示</li>
+<li>代码中没有任何守护测试</li>
+</ol>
+<p>完整的所有代码见<a href="https://github.com/junbin1011/CloudDisk/commit/dd2abeb9000d81af340fbface4f25182ada922f0" target="_blank" rel="noopener">Github</a></p>
+<h2 id="3-补充守护测试"><a href="#3-补充守护测试" class="headerlink" title="3. 补充守护测试"></a>3. 补充守护测试</h2><p>参考重构篇中，我们制定的策略，我们可以先做大型的测试，做为守护测试。同样我们会将数据库和网络相关的操作进行mock。测试用例主要包含梳理出来的主要业务逻辑，包括正常显示数据、网络异常存在缓存数据、网络异常没有缓存数据、空数据。代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4::class)</span><br><span class="line">@LargeTest</span><br><span class="line">@HiltAndroidTest</span><br><span class="line">@Config(application = HiltTestApplication::class, shadows = [ShadowDynamicFragment::class, ShadowDynamicController::class])</span><br><span class="line">class DynamicFragmentTest &#123;</span><br><span class="line">    @get:Rule</span><br><span class="line">    var hiltRule = HiltAndroidRule(this)</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show dynamic list when get success`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        ShadowDynamicFragment.state = ShadowDynamicFragment.State.SUCCESS</span><br><span class="line">        //when</span><br><span class="line">        val scenario: ActivityScenario&lt;DebugActivity&gt; = ActivityScenario.launch(DebugActivity::class.java)</span><br><span class="line">        scenario.onActivity &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;今天天气真不错！&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;2021-03-17 14:47:55&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;这个连续剧值得追！&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;2021-03-17 14:48:08&quot;)).check(matches(isDisplayed()))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show dynamic list when net work exception but have cache`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        ShadowDynamicFragment.state = ShadowDynamicFragment.State.ERROR</span><br><span class="line">        ShadowDynamicController.state = ShadowDynamicController.State.DATA</span><br><span class="line">        //when</span><br><span class="line">        val scenario: ActivityScenario&lt;DebugActivity&gt; = ActivityScenario.launch(DebugActivity::class.java)</span><br><span class="line">        scenario.onActivity &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;今天天气真不错！&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;2021-03-17 14:47:55&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;这个连续剧值得追！&quot;)).check(matches(isDisplayed()))</span><br><span class="line">            onView(withText(&quot;2021-03-17 14:48:08&quot;)).check(matches(isDisplayed()))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show error tip when net work exception and not have cache`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        ShadowDynamicFragment.state = ShadowDynamicFragment.State.ERROR</span><br><span class="line">        ShadowDynamicController.state = ShadowDynamicController.State.EMPTY</span><br><span class="line">        //when</span><br><span class="line">        val scenario: ActivityScenario&lt;DebugActivity&gt; = ActivityScenario.launch(DebugActivity::class.java)</span><br><span class="line">        scenario.onActivity &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;NetworkErrorException&quot;)).check(matches(isDisplayed()))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show empty tip when not has data`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        ShadowDynamicFragment.state = ShadowDynamicFragment.State.EMPTY</span><br><span class="line">        //when</span><br><span class="line">        val scenario: ActivityScenario&lt;DebugActivity&gt; = ActivityScenario.launch(DebugActivity::class.java)</span><br><span class="line">        scenario.onActivity &#123;</span><br><span class="line">            //then</span><br><span class="line">            onView(withText(&quot;empty data&quot;)).check(matches(isDisplayed()))</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最后我们完成了基本的守护测试，运行结果如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBa713c5f3dbbd69df2e9ae82a30852889?method=download&amp;shareKey=fa9379fdf7bc2823ecf320e842d77dfe" alt=""></p>
+<p>完整的所有代码见<a href="https://github.com/junbin1011/CloudDisk/commit/b9505f96999aa24b7b82b9deedc1763e332bf4de" target="_blank" rel="noopener">Github</a></p>
+<h2 id="Kotlin"><a href="#Kotlin" class="headerlink" title="Kotlin"></a><a href="https://www.kotlincn.net/docs/reference/" target="_blank" rel="noopener">Kotlin</a></h2><ol>
+<li><p>Kotlin与Java支持混编，我们可以将新增的代码用Kotlin编写。详细看Kotlin官网的<a href="https://www.kotlincn.net/docs/reference/java-interop.html" target="_blank" rel="noopener">Java互操作</a></p>
+</li>
+<li><p>AndroidStudio支持将原有的Java代码转换为Kotlin代码<br><img src="https://note.youdao.com/yws/api/personal/file/WEB5916b63a9bf0243cff8ddd17514ef82e?method=download&amp;shareKey=1e7d24937a02af225417180bcd279599" alt=""></p>
+</li>
+<li><p>AndroidStudio支持将查看Kotlin的字节码，Decompile为Java代码，方便理解一些语法特性</p>
+</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBfb70f1af8157bdd7eb5862f6b1f1aef7?method=download&amp;shareKey=6e5e988c2313c3a70fa57ae33b9f03d8" alt=""></p>
+<p>Dynamic模块团队成员决定使用2方案，将动态主页面转换为Kotlin代码。</p>
+<blockquote>
+<p>转化过程中，尽量一次转换一个相对内聚的包，小步转换加测试验证，转换后再人工进行Review和调整</p>
+</blockquote>
+<p>通过转换后，目前DynamicFragment的代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line">@Route(path = &quot;/dynamicBundle/dynamic&quot;)</span><br><span class="line">@AndroidEntryPoint</span><br><span class="line">class DynamicFragment : Fragment() &#123;</span><br><span class="line">    @Inject</span><br><span class="line">    lateinit var dynamicController: DynamicController</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    lateinit var transferFile: TransferFile</span><br><span class="line"></span><br><span class="line">    private lateinit var btnUpload: Button</span><br><span class="line">    private lateinit var dynamicListRecycleView: RecyclerView</span><br><span class="line">    private lateinit var tvMessage: TextView</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,</span><br><span class="line">                              savedInstanceState: Bundle?): View? &#123;</span><br><span class="line">        val view = inflater.inflate(R.layout.fragment_dynamic, container, false)</span><br><span class="line">        btnUpload = view.findViewById(R.id.btn_upload)</span><br><span class="line">        btnUpload.setOnClickListener &#123; uploadDynamic() &#125;</span><br><span class="line">        dynamicListRecycleView = view.findViewById(R.id.file_list)</span><br><span class="line">        tvMessage = view.findViewById(R.id.tv_message)</span><br><span class="line">        tvMessage.setOnClickListener &#123; getDynamicList() &#125;</span><br><span class="line">        getDynamicList()</span><br><span class="line">        return view</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private fun uploadDynamic() &#123;</span><br><span class="line">        //上传文件</span><br><span class="line">        val fileInfo = transferFile.upload(&quot;/data/data/user.png&quot;)</span><br><span class="line">        fileInfo?.let &#123; dynamicController.post(Dynamic(0, &quot;第一个动态&quot;, System.currentTimeMillis()), it) &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public fun getDynamicList() &#123;</span><br><span class="line">        Thread &#123;</span><br><span class="line">            val message = Message()</span><br><span class="line">            val dynamicList = dynamicController.getDynamicList()</span><br><span class="line">            message.what = 1</span><br><span class="line">            message.obj = dynamicList</span><br><span class="line">            mHandler.sendMessage(message)</span><br><span class="line">        &#125;.start()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    var mHandler = Handler &#123; msg -&gt;</span><br><span class="line">        if (msg.what == 1) &#123;</span><br><span class="line">            showTip(false)</span><br><span class="line">            //显示网络数据</span><br><span class="line">            var dynamicList = mutableListOf&lt;Dynamic&gt;()</span><br><span class="line">            msg.obj?.let &#123; dynamicList = msg.obj as MutableList&lt;Dynamic&gt; &#125;</span><br><span class="line">            if (dynamicList.isEmpty()) &#123;</span><br><span class="line">                showTip(true)</span><br><span class="line">                //显示空数据</span><br><span class="line">                tvMessage.text = &quot;empty data&quot;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                val fileListAdapter = activity?.let &#123; DynamicListAdapter(dynamicList, it) &#125;</span><br><span class="line">                dynamicListRecycleView.addItemDecoration(DividerItemDecoration(</span><br><span class="line">                        activity, DividerItemDecoration.VERTICAL))</span><br><span class="line">                //设置布局显示格式</span><br><span class="line">                dynamicListRecycleView.layoutManager = LinearLayoutManager(activity)</span><br><span class="line">                dynamicListRecycleView.adapter = fileListAdapter</span><br><span class="line">                //从网络中更新到数据保持到缓存之中</span><br><span class="line">                dynamicController.saveDynamicToCache(dynamicList)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (msg.what == 0) &#123;</span><br><span class="line">            //尝试从缓存中读取数据</span><br><span class="line">            val dynamicList = dynamicController.getDynamicListFromCache()</span><br><span class="line">            if (dynamicList.isEmpty()) &#123;</span><br><span class="line">                showTip(true)</span><br><span class="line">                //显示异常提醒数据</span><br><span class="line">                tvMessage.text = msg.obj.toString()</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                val fileListAdapter = activity?.let &#123; DynamicListAdapter(dynamicList, it) &#125;</span><br><span class="line">                dynamicListRecycleView.addItemDecoration(DividerItemDecoration(</span><br><span class="line">                        activity, DividerItemDecoration.VERTICAL))</span><br><span class="line">                //设置布局显示格式</span><br><span class="line">                dynamicListRecycleView.layoutManager = LinearLayoutManager(activity)</span><br><span class="line">                dynamicListRecycleView.adapter = fileListAdapter</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        false</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fun showTip(show: Boolean) &#123;</span><br><span class="line">        if (show) &#123;</span><br><span class="line">            tvMessage.visibility = View.VISIBLE</span><br><span class="line">            dynamicListRecycleView.visibility = View.GONE</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            tvMessage.visibility = View.GONE</span><br><span class="line">            dynamicListRecycleView.visibility = View.VISIBLE</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    companion object &#123;</span><br><span class="line">        fun newInstance(): DynamicFragment &#123;</span><br><span class="line">            val fragment = DynamicFragment()</span><br><span class="line">            val args = Bundle()</span><br><span class="line">            fragment.arguments = args</span><br><span class="line">            return fragment</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="4-简单设计"><a href="#4-简单设计" class="headerlink" title="4. 简单设计"></a>4. 简单设计</h2><h3 id="MVVM架构"><a href="#MVVM架构" class="headerlink" title="MVVM架构"></a>MVVM架构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">B(MVVM)--&gt;A(Model)</span><br><span class="line">B--&gt;|bingding|C(View)</span><br><span class="line">C--&gt;|bingding|B</span><br></pre></td></tr></table></figure>
+<ol>
+<li>业务逻辑和视图分离</li>
+<li>ViewModel和View之间通过binding绑定，不用定义大量的接口</li>
+<li>为了更高效管理线程，团队决定使用coroutine进行线程统一管理。架构风格参考<a href="https://github.com/android/architecture-samples" target="_blank" rel="noopener">architecture-samples</a></li>
+</ol>
+<h3 id="LiveData数据设计"><a href="#LiveData数据设计" class="headerlink" title="LiveData数据设计"></a>LiveData数据设计</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 数据列表</span><br><span class="line"> val dynamicListLiveData: LiveData&lt;List&lt;Dynamic&gt;&gt;</span><br><span class="line">// 异常信息</span><br><span class="line"> val errorMessageLiveData: LiveData&lt;String&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="相关的第三方库"><a href="#相关的第三方库" class="headerlink" title="相关的第三方库"></a>相关的第三方库</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;androidx.core:core-ktx:1.3.2&apos;</span><br><span class="line">implementation &apos;androidx.lifecycle:lifecycle-livedata-ktx:2.3.0&apos;</span><br><span class="line">implementation &apos;androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0&apos;</span><br><span class="line">implementation &apos;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1&apos;</span><br><span class="line">implementation &apos;org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1&apos;</span><br></pre></td></tr></table></figure>
+<h2 id="5-小步安全重构"><a href="#5-小步安全重构" class="headerlink" title="5.小步安全重构"></a>5.小步安全重构</h2><ul>
+<li>抽取DynamicFragment的业务逻辑到DynamicViewModel</li>
+<li>定义LiveData数据及xml的绑定</li>
+<li>抽取DymaicRepository</li>
+<li>抽取DataSource接口</li>
+</ul>
+<blockquote>
+<p>重构手法包含提取接口、移动方法、移动类、抽取方法、内联、提取变量等等。<strong>Kotlin目前IDE不支持移动方法到类</strong></p>
+</blockquote>
+<p>详细的演示见<a href="https://mp.weixin.qq.com/s/vex4Kn6Ts-dI3KX2Yiuq6w" target="_blank" rel="noopener">视频</a></p>
+<p> 详细的代码见<a href="https://github.com/junbin1011/CloudDisk/commit/911a15c493d01dceb8ee56a0bba48fee6ad9847f" target="_blank" rel="noopener">Github</a></p>
+<h3 id="补充测试用例"><a href="#补充测试用例" class="headerlink" title="补充测试用例"></a>补充测试用例</h3><ol>
+<li>补充DateUtil计算日期测试</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@SmallTest</span><br><span class="line">class DateUtilTest &#123;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `should return 2021-03-17 14 47 5 when input is 1615963675000L`() &#123;</span><br><span class="line">        val format = DateUtil.getDateToString(1615963675000L)</span><br><span class="line">        Assert.assertEquals(&quot;2021-03-17 14:47:55&quot;, format)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>补充MVVM业务逻辑测试</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line">@ExperimentalCoroutinesApi</span><br><span class="line">@SmallTest</span><br><span class="line">class DynamicViewModelTest &#123;</span><br><span class="line">    private val testDispatcher = TestCoroutineDispatcher()</span><br><span class="line"></span><br><span class="line">    @get:Rule</span><br><span class="line">    val rule = InstantTaskExecutorRule()</span><br><span class="line"></span><br><span class="line">    @Before</span><br><span class="line">    fun setUp() &#123;</span><br><span class="line">        Dispatchers.setMain(testDispatcher)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @After</span><br><span class="line">    fun tearDown() &#123;</span><br><span class="line">        Dispatchers.resetMain()</span><br><span class="line">        testDispatcher.cleanupTestCoroutines()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show dynamic list when get success`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val mockTransferFile = mock(TransferFile::class.java)</span><br><span class="line">        val mockDynamicRepository = mock(DynamicRepository::class.java)</span><br><span class="line">        `when`(mockDynamicRepository.getDynamicList()).thenReturn(getMockData())</span><br><span class="line">        val dynamicViewModel = DynamicViewModel(mockTransferFile, mockDynamicRepository)</span><br><span class="line">        //when</span><br><span class="line">        dynamicViewModel.getDynamicList()</span><br><span class="line">        //then</span><br><span class="line">        val dynamicOne = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)[0]</span><br><span class="line">        assertThat(dynamicOne.id).isEqualTo(1)</span><br><span class="line">        assertThat(dynamicOne.content).isEqualTo(&quot;今天天气真不错！&quot;)</span><br><span class="line">        assertThat(dynamicOne.date).isEqualTo(1615963675000L)</span><br><span class="line">        val dynamicTwo = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)[1]</span><br><span class="line">        assertThat(dynamicTwo.id).isEqualTo(2)</span><br><span class="line">        assertThat(dynamicTwo.content).isEqualTo(&quot;这个连续剧值得追！&quot;)</span><br><span class="line">        assertThat(dynamicTwo.date).isEqualTo(1615963688000L)</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show dynamic list when net work exception but have cache`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val mockTransferFile = mock(TransferFile::class.java)</span><br><span class="line">        val mockDynamicRepository = mock(DynamicRepository::class.java)</span><br><span class="line">        `when`(mockDynamicRepository.getDynamicList()).thenThrow(NetWorkErrorException::class.java)</span><br><span class="line">        `when`(mockDynamicRepository.getDynamicListFromCache()).thenReturn(getMockData())</span><br><span class="line">        val dynamicViewModel = DynamicViewModel(mockTransferFile, mockDynamicRepository)</span><br><span class="line"></span><br><span class="line">        //when</span><br><span class="line">        dynamicViewModel.getDynamicList()</span><br><span class="line">        //then</span><br><span class="line">        val dynamicOne = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)[0]</span><br><span class="line">        assertThat(dynamicOne.id).isEqualTo(1)</span><br><span class="line">        assertThat(dynamicOne.content).isEqualTo(&quot;今天天气真不错！&quot;)</span><br><span class="line">        assertThat(dynamicOne.date).isEqualTo(1615963675000L)</span><br><span class="line">        val dynamicTwo = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)[1]</span><br><span class="line">        assertThat(dynamicTwo.id).isEqualTo(2)</span><br><span class="line">        assertThat(dynamicTwo.content).isEqualTo(&quot;这个连续剧值得追！&quot;)</span><br><span class="line">        assertThat(dynamicTwo.date).isEqualTo(1615963688000L)</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show error tip when net work exception and not have cache`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val mockTransferFile = mock(TransferFile::class.java)</span><br><span class="line">        val mockDynamicRepository = mock(DynamicRepository::class.java)</span><br><span class="line">        `when`(mockDynamicRepository.getDynamicList()).thenThrow(NetWorkErrorException::class.java)</span><br><span class="line">        val dynamicViewModel = DynamicViewModel(mockTransferFile, mockDynamicRepository)</span><br><span class="line"></span><br><span class="line">        //when</span><br><span class="line">        dynamicViewModel.getDynamicList()</span><br><span class="line">        //then</span><br><span class="line">        val errorMessage = LiveDataTestUtil.getValue(dynamicViewModel.errorMessageLiveData)</span><br><span class="line">        assertThat(errorMessage).isEqualTo(&quot;NetWorkErrorException&quot;)</span><br><span class="line">        val dynamicList = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)</span><br><span class="line">        assertThat(dynamicList).isNull()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `show show empty tip when not has data`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val mockTransferFile = mock(TransferFile::class.java)</span><br><span class="line">        val mockDynamicRepository = mock(DynamicRepository::class.java)</span><br><span class="line">        `when`(mockDynamicRepository.getDynamicList()).thenReturn(null)</span><br><span class="line">        val dynamicViewModel = DynamicViewModel(mockTransferFile, mockDynamicRepository)</span><br><span class="line"></span><br><span class="line">        //when</span><br><span class="line">        dynamicViewModel.getDynamicList()</span><br><span class="line">        //then</span><br><span class="line">        val dynamicList = LiveDataTestUtil.getValue(dynamicViewModel.dynamicListLiveData)</span><br><span class="line">        assertThat(dynamicList).isNull()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private fun getMockData(): ArrayList&lt;Dynamic&gt; &#123;</span><br><span class="line">        val dynamicList = ArrayList&lt;Dynamic&gt;()</span><br><span class="line">        dynamicList.add(Dynamic(1, &quot;今天天气真不错！&quot;, 1615963675000L))</span><br><span class="line">        dynamicList.add(Dynamic(2, &quot;这个连续剧值得追！&quot;, 1615963688000L))</span><br><span class="line">        return dynamicList</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>dynamic bundle所有的测试，报告如下：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB180d3632972403daa54752a0b49271a7?method=download&amp;shareKey=f889bf81d584ac02a2e0328656739b02" alt=""></p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEBd486bf877d1d108f51ab98e8540f3ea1?method=download&amp;shareKey=578698ea32c537b4e9522147e36cccb5" alt=""></p>
+<h3 id="DataBinging"><a href="#DataBinging" class="headerlink" title="DataBinging"></a>DataBinging</h3><p> Fragment 改造如下：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line"> @Route(path = &quot;/dynamicBundle/dynamic&quot;)</span><br><span class="line">@AndroidEntryPoint</span><br><span class="line">class DynamicFragment : Fragment() &#123;</span><br><span class="line"></span><br><span class="line">    private lateinit var binding: FragmentDynamicBinding</span><br><span class="line">    private val dynamicViewModel: DynamicViewModel by viewModels()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,</span><br><span class="line">                              savedInstanceState: Bundle?): View? &#123;</span><br><span class="line">        binding = FragmentDynamicBinding.inflate(inflater, container, false)</span><br><span class="line">        binding.btnUpload.setOnClickListener &#123; dynamicViewModel.uploadDynamic() &#125;</span><br><span class="line">        binding.tvMessage.setOnClickListener &#123; dynamicViewModel.getDynamicList() &#125;</span><br><span class="line">        dynamicViewModel.getDynamicList()</span><br><span class="line">        subscribeUi()</span><br><span class="line">        return binding.root</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private fun subscribeUi() &#123;</span><br><span class="line">        dynamicViewModel.dynamicListLiveData.observe(viewLifecycleOwner, &#123;</span><br><span class="line">            if (it.isNullOrEmpty()) &#123;</span><br><span class="line">                showEmptyData()</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                showDynamicList(it)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">        dynamicViewModel.errorMessageLiveData.observe(viewLifecycleOwner, &#123;</span><br><span class="line">            showErrorMessage(it)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private fun showErrorMessage(errorMessage: String) &#123;</span><br><span class="line">        binding.showTip = true</span><br><span class="line">        //显示异常提醒数据</span><br><span class="line">        binding.tvMessage.text = errorMessage</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private fun showDynamicList(dynamicList: List&lt;Dynamic&gt;) &#123;</span><br><span class="line">        binding.showTip = false</span><br><span class="line">        val dynamicListAdapter = DynamicListAdapter()</span><br><span class="line">        dynamicListAdapter.submitList(dynamicList)</span><br><span class="line">        binding.dynamicList.addItemDecoration(DividerItemDecoration(</span><br><span class="line">                activity, DividerItemDecoration.VERTICAL))</span><br><span class="line">        //设置布局显示格式</span><br><span class="line">        binding.dynamicList.layoutManager = LinearLayoutManager(activity)</span><br><span class="line">        binding.dynamicList.adapter = dynamicListAdapter</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private fun showEmptyData() &#123;</span><br><span class="line">        binding.showTip = true</span><br><span class="line">        //显示空数据</span><br><span class="line">        binding.tvMessage.text = &quot;empty data&quot;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    companion object &#123;</span><br><span class="line">        fun newInstance(): DynamicFragment &#123;</span><br><span class="line">            val fragment = DynamicFragment()</span><br><span class="line">            val args = Bundle()</span><br><span class="line">            fragment.arguments = args</span><br><span class="line">            return fragment</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;data&gt;</span><br><span class="line"></span><br><span class="line">        &lt;import type=&quot;android.view.View&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;variable</span><br><span class="line">            name=&quot;showTip&quot;</span><br><span class="line">            type=&quot;boolean&quot; /&gt;</span><br><span class="line"></span><br><span class="line">    &lt;/data&gt;</span><br><span class="line"></span><br><span class="line">    &lt;FrameLayout</span><br><span class="line">        android:layout_width=&quot;match_parent&quot;</span><br><span class="line">        android:layout_height=&quot;match_parent&quot;&gt;</span><br><span class="line"></span><br><span class="line">        &lt;TextView</span><br><span class="line">            android:id=&quot;@+id/tv_message&quot;</span><br><span class="line">            android:layout_width=&quot;match_parent&quot;</span><br><span class="line">            android:layout_height=&quot;match_parent&quot;</span><br><span class="line">            android:gravity=&quot;center&quot;</span><br><span class="line">            android:text=&quot;&quot;</span><br><span class="line">            android:visibility=&quot;@&#123;showTip ? View.VISIBLE:View.GONE&#125;&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;androidx.recyclerview.widget.RecyclerView</span><br><span class="line">            android:id=&quot;@+id/dynamicList&quot;</span><br><span class="line">            android:layout_width=&quot;match_parent&quot;</span><br><span class="line">            android:layout_height=&quot;match_parent&quot;</span><br><span class="line">            android:visibility=&quot;@&#123;showTip ? View.GONE:View.VISIBLE&#125;&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;Button</span><br><span class="line">            android:id=&quot;@+id/btn_upload&quot;</span><br><span class="line">            android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_gravity=&quot;right|bottom&quot;</span><br><span class="line">            android:layout_margin=&quot;10dp&quot;</span><br><span class="line">            android:text=&quot;upload&quot; /&gt;</span><br><span class="line">    &lt;/FrameLayout&gt;</span><br><span class="line"></span><br><span class="line">&lt;/layout&gt;</span><br></pre></td></tr></table></figure></p>
+<p> Adapter 改造如下：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"> class DynamicListAdapter() : ListAdapter&lt;Dynamic, DynamicListAdapter.DynamicVH&gt;(DynamicDiffCallback()) &#123;</span><br><span class="line"></span><br><span class="line">    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DynamicVH &#123;</span><br><span class="line">        return DynamicVH(DataBindingUtil.inflate(LayoutInflater.from(parent.context), R.layout.dynamic_list_item, parent, false))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun onBindViewHolder(holder: DynamicVH, position: Int) &#123;</span><br><span class="line">        holder.binding.dynamic = getItem(position)</span><br><span class="line">        holder.binding.executePendingBindings()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    class DynamicVH(val binding: DynamicListItemBinding) : RecyclerView.ViewHolder(binding.root)</span><br><span class="line"></span><br><span class="line">    private class DynamicDiffCallback : DiffUtil.ItemCallback&lt;Dynamic&gt;() &#123;</span><br><span class="line">        override fun areItemsTheSame(oldItem: Dynamic, newItem: Dynamic): Boolean &#123;</span><br><span class="line">            return oldItem.id == newItem.id</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        override fun areContentsTheSame(oldItem: Dynamic, newItem: Dynamic): Boolean &#123;</span><br><span class="line">            return oldItem == newItem</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;data&gt;</span><br><span class="line"></span><br><span class="line">        &lt;import type=&quot;android.view.View&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;variable</span><br><span class="line">            name=&quot;dynamic&quot;</span><br><span class="line">            type=&quot;com.cloud.disk.bundle.dynamic.Dynamic&quot; /&gt;</span><br><span class="line">    &lt;/data&gt;</span><br><span class="line"></span><br><span class="line">    &lt;FrameLayout</span><br><span class="line">        android:layout_width=&quot;match_parent&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:orientation=&quot;horizontal&quot;</span><br><span class="line">        android:padding=&quot;10dp&quot;&gt;</span><br><span class="line"></span><br><span class="line">        &lt;TextView</span><br><span class="line">            android:id=&quot;@+id/tv_content&quot;</span><br><span class="line">            android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_gravity=&quot;left&quot;</span><br><span class="line">            android:text=&quot;@&#123;dynamic.content&#125;&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;TextView</span><br><span class="line">            android:id=&quot;@+id/tv_date&quot;</span><br><span class="line">            android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_gravity=&quot;right&quot;</span><br><span class="line">            android:text=&quot;@&#123;dynamic.formatDate&#125;&quot; /&gt;</span><br><span class="line">    &lt;/FrameLayout&gt;</span><br><span class="line"></span><br><span class="line">&lt;/layout&gt;</span><br></pre></td></tr></table></figure></p>
+<p> 详细的代码见<a href="https://github.com/junbin1011/CloudDisk/commit/0497fd86cf4efbfa4a195c92b65051817d2d4cae" target="_blank" rel="noopener">Github</a></p>
+<h2 id="6-集成验收测试"><a href="#6-集成验收测试" class="headerlink" title="6.集成验收测试"></a>6.集成验收测试</h2><ol>
+<li>dynamic bundle模块发布1.0.1版本</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;com.cloud.disk.bundle:dynamic:1.0.1&apos;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>其他模块同步发布修改注入问题</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">implementation &apos;com.cloud.disk.bundle:file:1.0.2&apos;</span><br><span class="line">implementation &apos;com.cloud.disk.bundle:user:1.0.1&apos;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>执行守护测试</li>
+</ol>
+<p>我们发现因为binding生成的文件有异常</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Field &lt;com.cloud.dynamicbundle.databinding.DynamicListItemBinding.mDynamic&gt; has type &lt;com.cloud.disk.bundle.dynamic.Dynamic&gt; in (DynamicListItemBinding.java:0)</span><br><span class="line">Method &lt;com.cloud.dynamicbundle.databinding.DynamicListItemBinding.getDynamic()&gt; has return type &lt;com.cloud.disk.bundle.dynamic.Dynamic&gt; in (DynamicListItemBinding.java:0)</span><br><span class="line">Method &lt;com.cloud.dynamicbundle.databinding.DynamicListItemBinding.setDynamic(com.cloud.disk.bundle.dynamic.Dynamic)&gt; has parameter of type &lt;com.cloud.disk.bundle.dynamic.Dynamic&gt; in (DynamicListItemBinding.java:0)</span><br></pre></td></tr></table></figure>
+<p>增加过滤规则<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.*com.cloud.*.databinding.*ItemBinding.*</span><br></pre></td></tr></table></figure></p>
+<ol start="4">
+<li>运行检查</li>
+</ol>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB4cd749f21a707eab239a6ea5f1ee729c?method=download&amp;shareKey=954910ce097ab724ef647e3bc1d0c92b" alt=""></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇介绍了动态模块团队将动态件主页切换至Kotlin代码、重构为MVVM架构，并且补充了自动化测试。经过重构后，团队的开发效率和版本质量有了明显的提升。但本地数据库的管理依旧还是大量的sql 语句拼写，非常不利于扩展及维护，编写自动化测试也非常麻烦。</p>
+<p>下一篇，移动应用遗留系统重构（15）- 数据库重构示例篇。我们将继续对数据库进行重构改造。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<p><a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/20/移动应用遗留系统重构（13）-MVP重构示例篇/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2113,190 +2360,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/12/移动应用遗留系统重构（4）-分析篇/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/" itemprop="url">
-                  移动应用遗留系统重构（4）-分析篇
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-12T09:15:58+08:00">
-                2021-04-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/04/12/移动应用遗留系统重构（4）-分析篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/04/12/移动应用遗留系统重构（4）-分析篇/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a>我们介绍了CloudDisk的业务及代码现状。分享了“理想”（未来的架构设计）与“现实”（目前的代码现状），接下来在我们开始动手进行重构时，我们首先得知道往理想的设计架构演化，中间存在多少问题。一方面作为开始重构的输入，另外一方面我们有数据指标，也能更好评估工作量及衡量进度。</p>
-<p>接下来我们将根据架构篇团队采用的架构设计，结合目前的代码，总结分析工具及方法。</p>
-<h1 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h1><p>我们先回忆一下<a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">架构篇</a>里团队采用的架构设计。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB3dd9a532ba2db949b2b66a6263061ae4?method=download&amp;shareKey=270446693f31a61502e5a8b460ebd557" alt=""></p>
-<ol>
-<li>代码复用</li>
-</ol>
-<ul>
-<li>公共能力复用，有一层专门统一管理应用公用的基础能力，如图片、网络、存储能力、安全等</li>
-<li>公用业务能力复用，有一层专门统一管理应用的业务通用组件，如分享、推送、登录等</li>
-</ul>
-<ol start="2">
-<li>低耦合</li>
-</ol>
-<ul>
-<li>业务模块间通过API方式依赖，不依赖具体的模块实现</li>
-<li>依赖方向清晰，上层模块依赖下层模块</li>
-</ul>
-<ol start="3">
-<li>并行研发</li>
-</ol>
-<ul>
-<li>业务模块支持独立编译调试</li>
-<li>业务模块独立发布</li>
-</ul>
-<p>结合该4层架构、已有的代码，以及业务的后续演化，团队设计的新架构如下</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB270d321fd2812757fb2a5c400ce44aaa?method=download&amp;shareKey=dac1353f74361be1c7a25bcc2b83924c" alt=""></p>
-<h1 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h1><h2 id="ArchUnit"><a href="#ArchUnit" class="headerlink" title="ArchUnit"></a><a href="https://www.archunit.org/" target="_blank" rel="noopener">ArchUnit</a></h2><p>有了架构设计后，我们就能识别代码的边界，这里我们可以通过<a href="https://www.archunit.org/" target="_blank" rel="noopener">Archunit</a>进行边界约束描述。我们可以得到2条通用的守护规则。</p>
-<ol>
-<li>垂直方向，下层模块不能反向依赖上层</li>
-<li>横向方向，组件之间不能存在相互的依赖</li>
-</ol>
-<p>转化为ArchUnit的测试用例如下:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@ArchTest</span><br><span class="line">  public static final ArchRule architecture_layer_should_has_right_dependency =layeredArchitecture()</span><br><span class="line">          .layer(&quot;Library&quot;).definedBy(&quot;..cloud.disk.library..&quot;)</span><br><span class="line">          .layer(&quot;PlatForm&quot;).definedBy(&quot;..cloud.disk.platform..&quot;)</span><br><span class="line">          .layer(&quot;FileBundle&quot;).definedBy(&quot;..cloud.disk.bundle.file..&quot;)</span><br><span class="line">          .layer(&quot;DynamicBundle&quot;).definedBy(&quot;..cloud.disk.bundle.dynamic..&quot;)</span><br><span class="line">          .layer(&quot;UserBundle&quot;).definedBy(&quot;..cloud.disk.bundle.user..&quot;)</span><br><span class="line">          .layer(&quot;AllBundle&quot;).definedBy(&quot;..cloud.disk.bundle..&quot;)</span><br><span class="line">          .layer(&quot;App&quot;).definedBy(&quot;..cloud.disk.app..&quot;)</span><br><span class="line">          .whereLayer(&quot;App&quot;).mayOnlyBeAccessedByLayers()</span><br><span class="line">          .whereLayer(&quot;FileBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;DynamicBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;UserBundle&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;)</span><br><span class="line">          .whereLayer(&quot;PlatForm&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;)</span><br><span class="line">          .whereLayer(&quot;Library&quot;).mayOnlyBeAccessedByLayers(&quot;App&quot;,&quot;AllBundle&quot;,&quot;PlatForm&quot;);</span><br></pre></td></tr></table></figure>
-<p>当然这个用例的执行是失败的，因为我们基本的包结构还没有调整。但有了架构守护测试用例，我们就可以逐步把代码移动到对应的Package中，直到守护用例运行通过为止。</p>
-<p>接下来我们先运用IDE工具进行基础的包结构调整，调整后的结构如下</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB8093cefa8193b5b2b4b742c2df9b69bb?method=download&amp;shareKey=c32140212500ae26a81515fb1f47cc60" alt=""></p>
-<p>调整后运行ArchUnit测试运行结果如下<br><img src="https://note.youdao.com/yws/api/personal/file/WEB23ae4fbe7c0dfd61162d0afe376f6fb0?method=download&amp;shareKey=134752c0755c0077b36defb768d2a0a6" alt=""></p>
-<p>这些异常的提示就是我们需要处理的异常依赖。但是ArchUnit的这个提示比较不不友好，接下来我们介绍另外一种分析异常依赖的方式，使用Intellij Dependencies 。</p>
-<h2 id="Intellij-Dependencies"><a href="#Intellij-Dependencies" class="headerlink" title="Intellij Dependencies"></a>Intellij Dependencies</h2><p>我们选择对应的Package，选择Analyze菜单，点击Dependencies，可以找出该Package所依赖的相关类。<br><img src="https://note.youdao.com/yws/api/personal/file/WEBb2f138f8d771e56adc8dbb7a1b3f3d40?method=download&amp;shareKey=475fead51386ad6d916418b498772dbe" alt=""></p>
-<p>我们选择dynamic Package进行分析后，发现根据现有的架构约束，存在横向的Bundle依赖需要进行解除依赖。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB90b534d55160794d08d34cf248087e0b?method=download&amp;shareKey=1f4dd8f2a0b67e166ebfc11708e2f98c" alt=""></p>
-<p>我是在实际重构过程中，我们可以频繁借助该功能验证耦合解除情况，并且同时通过ArchUnit测试做好守护。</p>
-<p><strong>详细代码见<a href="https://github.com/junbin1011/CloudDisk/commit/d4b81762177b3a5e38d9d622170786540bcc7478" target="_blank" rel="noopener">Cloud Disk</a></strong></p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这一篇我们分享了如何借助工具进行异常依赖的分析。当我们有了未来的架构设计后，可以借助ArchUnit进行架构测试守护，通过Intellij的Dependendencies 我们可以方便以Package或者Class为单位进行依赖分析。</p>
-<p>当我们已经分析出需要处理的异常依赖，接下来我们就可以逐步进行重构。下一篇，我们将给大家分享实践总结的一些重构套路，移动应用遗留系统重构（5）- 重构方法篇。</p>
-<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
-<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
-<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
-<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
-<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
-<ul>
-<li>作者：黄俊彬 </li>
-<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
-<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
-<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2344,7 +2407,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">95</span>
+                <span class="site-state-item-count">96</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
