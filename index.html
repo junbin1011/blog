@@ -271,6 +271,205 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/29/移动应用遗留系统重构（15）-数据库重构示例篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/06/29/移动应用遗留系统重构（15）-数据库重构示例篇/" itemprop="url">
+                  移动应用遗留系统重构（15）- 数据库重构示例篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-29T20:43:49+08:00">
+                2021-06-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/29/移动应用遗留系统重构（15）-数据库重构示例篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/06/29/移动应用遗留系统重构（15）-数据库重构示例篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6977702335879315493" target="_blank" rel="noopener">移动应用遗留系统重构（14）- Kotlin+MVVM重构示例篇</a>我们介绍了动态模块团队将动态件主页切换至Kotlin代码、重构为MVVM架构，并且补充了自动化测试。经过重构后，团队的开发效率和版本质量有了明显的提升。但本地数据库的管理依旧还是大量的sql 语句拼写，非常不利于扩展及维护，编写自动化测试也非常麻烦。</p>
+<p>Google官方的建议是<a href="https://developer.android.com/training/data-storage/room#db-migration-testing" target="_blank" rel="noopener">我们强烈建议您使用 Room而不是 SQLite</a>。框架带来的好处是节省编写大量的模版代码，易于维护，同时面向接口，便于扩展。关于性能方面，有的同学可能认为，使用原生的SQL语句可以将性能优化到极致，但往往忽略了维护大量的SQL拼写语句也带来了非常大的成本，况且框架也支持自定义SQL语句。</p>
+<p>接下来给大家分享，动态模块的本地缓存如何从Sqlite安全、渐进式重构至Room。</p>
+<h1 id="重构"><a href="#重构" class="headerlink" title="重构"></a>重构</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">A(1.梳理业务逻辑)--&gt;B(2.分析原有的代码设计)</span><br><span class="line">B--&gt;C(3.补充守护测试)</span><br><span class="line">C--&gt;D(4.简单设计)</span><br><span class="line">D--&gt;E(5.小步安全重构)</span><br><span class="line">E--&gt;F(6.集成验收测试)</span><br></pre></td></tr></table></figure>
+<h2 id="1-梳理业务逻辑"><a href="#1-梳理业务逻辑" class="headerlink" title="1.梳理业务逻辑"></a>1.梳理业务逻辑</h2><p>原有的缓存逻辑比较简单，主要提供2个功能。</p>
+<ul>
+<li>查询缓存的动态数据</li>
+<li>保存缓存的动态数据（保存上一次加载的所有数据）</li>
+</ul>
+<h2 id="2-分析原有的代码设计"><a href="#2-分析原有的代码设计" class="headerlink" title="2.分析原有的代码设计"></a>2.分析原有的代码设计</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">class LocalDataSource @Inject constructor(</span><br><span class="line">        @ApplicationContext private var mContext: Context) : DataSource &#123;</span><br><span class="line"></span><br><span class="line">    //判断游标是否为空</span><br><span class="line">    override fun getDynamicListFromCache(): List&lt;Dynamic&gt; &#123;</span><br><span class="line">        val dynamicList: MutableList&lt;Dynamic&gt; = ArrayList()</span><br><span class="line">        val dataBaseHelper = DataBaseHelper(mContext)</span><br><span class="line">        val c = dataBaseHelper.writableDatabase.query(DataBaseHelper.dynamic_info, null, null, null, null, null, null)</span><br><span class="line">        if (c.moveToFirst()) &#123; //判断游标是否为空</span><br><span class="line">            for (i in 0 until c.count) &#123;</span><br><span class="line">                c.move(i) //移动到指定记录</span><br><span class="line">                val id = c.getInt(c.getColumnIndex(DataBaseHelper.id))</span><br><span class="line">                val content = c.getString(c.getColumnIndex(DataBaseHelper.content))</span><br><span class="line">                val date = c.getLong(c.getColumnIndex(DataBaseHelper.date))</span><br><span class="line">                dynamicList.add(Dynamic(id, content, date))</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return dynamicList</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun saveDynamicToCache(dynamicList: List&lt;Dynamic&gt;?) &#123;</span><br><span class="line">        val dataBaseHelper = DataBaseHelper(mContext)</span><br><span class="line">        dynamicList?.let &#123;</span><br><span class="line">            dataBaseHelper.writableDatabase.delete(DataBaseHelper.dynamic_info, null, null)</span><br><span class="line">            for ((id, content, date) in dynamicList) &#123;</span><br><span class="line">                val cv = ContentValues()</span><br><span class="line">                cv.put(DataBaseHelper.id, id)</span><br><span class="line">                cv.put(DataBaseHelper.content, content)</span><br><span class="line">                cv.put(DataBaseHelper.date, date)</span><br><span class="line">                dataBaseHelper.writableDatabase.insert(DataBaseHelper.dynamic_info, null, cv)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要存在问题：</p>
+<ul>
+<li>较多模版代码，不利于维护扩展</li>
+<li>没有采用事务管理，极端大数据情况下，可能有异常</li>
+<li>没有任何的守护测试</li>
+</ul>
+<h2 id="3-补充守护测试"><a href="#3-补充守护测试" class="headerlink" title="3.补充守护测试"></a>3.补充守护测试</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4::class)</span><br><span class="line">@MediumTest</span><br><span class="line">class LocalDataSourceTest &#123;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `should get dynamic is empty when database has not data`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        val localDataSource = LocalDataSource(ApplicationProvider.getApplicationContext())</span><br><span class="line">        //when</span><br><span class="line">        val dynamicListFromCache = localDataSource.getDynamicListFromCache()</span><br><span class="line">        //then</span><br><span class="line">        assertThat(dynamicListFromCache).isEmpty()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `should get dynamic success when database has data`() &#123;</span><br><span class="line">        //given</span><br><span class="line">        val localDataSource = LocalDataSource(ApplicationProvider.getApplicationContext())</span><br><span class="line">        localDataSource.saveDynamicToCache(getMockData())</span><br><span class="line">        //when</span><br><span class="line">        val dynamicListFromCache = localDataSource.getDynamicListFromCache()</span><br><span class="line">        //then</span><br><span class="line">        val dynamicOne = dynamicListFromCache[0]</span><br><span class="line">        assertThat(dynamicOne.id).isEqualTo(1)</span><br><span class="line">        assertThat(dynamicOne.content).isEqualTo(&quot;今天天气真不错！&quot;)</span><br><span class="line">        assertThat(dynamicOne.date).isEqualTo(1615963675000L)</span><br><span class="line">        val dynamicTwo = dynamicListFromCache[1]</span><br><span class="line">        assertThat(dynamicTwo.id).isEqualTo(2)</span><br><span class="line">        assertThat(dynamicTwo.content).isEqualTo(&quot;这个连续剧值得追！&quot;)</span><br><span class="line">        assertThat(dynamicTwo.date).isEqualTo(1615963688000L)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private fun getMockData(): ArrayList&lt;Dynamic&gt; &#123;</span><br><span class="line">        val dynamicList = ArrayList&lt;Dynamic&gt;()</span><br><span class="line">        dynamicList.add(Dynamic(1, &quot;今天天气真不错！&quot;, 1615963675000L))</span><br><span class="line">        dynamicList.add(Dynamic(2, &quot;这个连续剧值得追！&quot;, 1615963688000L))</span><br><span class="line">        return dynamicList</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="4-简单设计"><a href="#4-简单设计" class="headerlink" title="4.简单设计"></a>4.简单设计</h2><p>分步进行重构，小步验证。</p>
+<ol>
+<li>将SQLiteOpenHelper管理数据库替换成Room的管理，但还是维持原有的SQL操作方式</li>
+<li>将原有的SQL操作方式调整为ROOM的Dao形式</li>
+<li>使用Coroutine管理数据库的异步操作</li>
+<li>调整已有的测试用例</li>
+</ol>
+<h2 id="5-小步安全重构"><a href="#5-小步安全重构" class="headerlink" title="5.小步安全重构"></a>5.小步安全重构</h2><h3 id="将SQLiteOpenHelper管理数据库替换成Room的管理，但还是维持原有的SQL操作方式"><a href="#将SQLiteOpenHelper管理数据库替换成Room的管理，但还是维持原有的SQL操作方式" class="headerlink" title="将SQLiteOpenHelper管理数据库替换成Room的管理，但还是维持原有的SQL操作方式"></a>将SQLiteOpenHelper管理数据库替换成Room的管理，但还是维持原有的SQL操作方式</h3><ol>
+<li>bean改造，注意字段与表名需要与原来一致</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@Entity(tableName=&quot;dynamic_info&quot;)</span><br><span class="line">data class Dynamic(@PrimaryKey @ColumnInfo(name = &quot;id&quot;) val id: Int,</span><br><span class="line">                   @ColumnInfo(name = &quot;content&quot;) val content: String,</span><br><span class="line">                   @ColumnInfo(name = &quot;date&quot;) val date: Long) &#123;</span><br><span class="line">    @Ignore</span><br><span class="line">    val formatDate = DateUtil.getDateToString(date)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>使用SupportSQLiteOpenHelper进行管理，继续以writableDatabase进行管理</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">class LocalDataSource @Inject constructor(</span><br><span class="line">        @ApplicationContext private var mContext: Context) : DataSource &#123;</span><br><span class="line"></span><br><span class="line">    val db = Room.databaseBuilder(</span><br><span class="line">            mContext,</span><br><span class="line">            AppDatabase::class.java, &quot;dynamic.db&quot;</span><br><span class="line">    ).build()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    //判断游标是否为空</span><br><span class="line">    override fun getDynamicListFromCache(): List&lt;Dynamic&gt; &#123;</span><br><span class="line">        val dynamicList: MutableList&lt;Dynamic&gt; = ArrayList()</span><br><span class="line">        val dataBaseHelper = db.openHelper</span><br><span class="line">        val c = dataBaseHelper.writableDatabase.query(&quot;&quot;)</span><br><span class="line">        if (c.moveToFirst()) &#123; //判断游标是否为空</span><br><span class="line">            for (i in 0 until c.count) &#123;</span><br><span class="line">                c.move(i) //移动到指定记录</span><br><span class="line">                val id = c.getInt(c.getColumnIndex(DataBaseHelper.id))</span><br><span class="line">                val content = c.getString(c.getColumnIndex(DataBaseHelper.content))</span><br><span class="line">                val date = c.getLong(c.getColumnIndex(DataBaseHelper.date))</span><br><span class="line">                dynamicList.add(Dynamic(id, content, date))</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return dynamicList</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun saveDynamicToCache(dynamicList: List&lt;Dynamic&gt;?) &#123;</span><br><span class="line">        val dataBaseHelper = db.openHelper</span><br><span class="line">        dynamicList?.let &#123;</span><br><span class="line">            dataBaseHelper.writableDatabase.delete(DataBaseHelper.dynamic_info, null, null)</span><br><span class="line">            for ((id, content, date) in dynamicList) &#123;</span><br><span class="line">                val cv = ContentValues()</span><br><span class="line">                cv.put(DataBaseHelper.id, id)</span><br><span class="line">                cv.put(DataBaseHelper.content, content)</span><br><span class="line">                cv.put(DataBaseHelper.date, date)</span><br><span class="line">                dataBaseHelper.writableDatabase.insert(DataBaseHelper.dynamic_info, SQLiteDatabase.CONFLICT_REPLACE, cv)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="将原有的SQL操作方式调整为ROOM的Dao形式"><a href="#将原有的SQL操作方式调整为ROOM的Dao形式" class="headerlink" title="将原有的SQL操作方式调整为ROOM的Dao形式"></a>将原有的SQL操作方式调整为ROOM的Dao形式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">class LocalDataSource @Inject constructor(</span><br><span class="line">        @ApplicationContext private var mContext: Context) : DataSource &#123;</span><br><span class="line"></span><br><span class="line">    private val db = Room.databaseBuilder(</span><br><span class="line">            mContext,</span><br><span class="line">            AppDatabase::class.java, &quot;dynamic.db&quot;</span><br><span class="line">    ).build()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    //判断游标是否为空</span><br><span class="line">    override  fun getDynamicListFromCache(): List&lt;Dynamic&gt; &#123;</span><br><span class="line">        return db.dynamicDao().getAll()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override  fun saveDynamicToCache(dynamicList: List&lt;Dynamic&gt;?) &#123;</span><br><span class="line"></span><br><span class="line">        dynamicList?.let &#123;</span><br><span class="line">            db.dynamicDao().deleteAll()</span><br><span class="line">            db.dynamicDao().insertAll(*it.toTypedArray())</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="使用Coroutine管理数据库的异步操作"><a href="#使用Coroutine管理数据库的异步操作" class="headerlink" title="使用Coroutine管理数据库的异步操作"></a>使用Coroutine管理数据库的异步操作</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@Dao</span><br><span class="line">interface DynamicDao &#123;</span><br><span class="line">    @Query(&quot;SELECT * FROM dynamic_info&quot;)</span><br><span class="line">    suspend fun getAll(): List&lt;Dynamic&gt;</span><br><span class="line"></span><br><span class="line">    @Insert</span><br><span class="line">    suspend fun insertAll(vararg dynamic: Dynamic)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Query(&quot;DELETE FROM dynamic_info&quot;)</span><br><span class="line">    suspend fun deleteAll()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="调整已有的测试用例"><a href="#调整已有的测试用例" class="headerlink" title="调整已有的测试用例"></a>调整已有的测试用例</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">@ExperimentalCoroutinesApi</span><br><span class="line">@RunWith(AndroidJUnit4::class)</span><br><span class="line">@MediumTest</span><br><span class="line">class LocalDataSourceTest &#123;</span><br><span class="line">    private val testDispatcher = TestCoroutineDispatcher()</span><br><span class="line"></span><br><span class="line">    @Before</span><br><span class="line">    fun setUp() &#123;</span><br><span class="line">        Dispatchers.setMain(testDispatcher)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @After</span><br><span class="line">    fun tearDown() &#123;</span><br><span class="line">        Dispatchers.resetMain()</span><br><span class="line">        testDispatcher.cleanupTestCoroutines()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `should get dynamic is empty when database has not data`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val localDataSource = LocalDataSource(ApplicationProvider.getApplicationContext())</span><br><span class="line">        //when</span><br><span class="line">        val dynamicListFromCache = localDataSource.getDynamicListFromCache()</span><br><span class="line">        //then</span><br><span class="line">        assertThat(dynamicListFromCache).isEmpty()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    fun `should get dynamic success when database has data`() = runBlocking &#123;</span><br><span class="line">        //given</span><br><span class="line">        val localDataSource = LocalDataSource(ApplicationProvider.getApplicationContext())</span><br><span class="line">        localDataSource.saveDynamicToCache(getMockData())</span><br><span class="line">        //when</span><br><span class="line">        val dynamicListFromCache = localDataSource.getDynamicListFromCache()</span><br><span class="line">        //then</span><br><span class="line">        val dynamicOne = dynamicListFromCache[0]</span><br><span class="line">        assertThat(dynamicOne.id).isEqualTo(1)</span><br><span class="line">        assertThat(dynamicOne.content).isEqualTo(&quot;今天天气真不错！&quot;)</span><br><span class="line">        assertThat(dynamicOne.date).isEqualTo(1615963675000L)</span><br><span class="line">        val dynamicTwo = dynamicListFromCache[1]</span><br><span class="line">        assertThat(dynamicTwo.id).isEqualTo(2)</span><br><span class="line">        assertThat(dynamicTwo.content).isEqualTo(&quot;这个连续剧值得追！&quot;)</span><br><span class="line">        assertThat(dynamicTwo.date).isEqualTo(1615963688000L)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private fun getMockData(): ArrayList&lt;Dynamic&gt; &#123;</span><br><span class="line">        val dynamicList = ArrayList&lt;Dynamic&gt;()</span><br><span class="line">        dynamicList.add(Dynamic(1, &quot;今天天气真不错！&quot;, 1615963675000L))</span><br><span class="line">        dynamicList.add(Dynamic(2, &quot;这个连续剧值得追！&quot;, 1615963688000L))</span><br><span class="line">        return dynamicList</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="6-集成验收测试"><a href="#6-集成验收测试" class="headerlink" title="6.集成验收测试"></a>6.集成验收测试</h2><ol>
+<li><p>允行Dynamic模块所有守护测试，成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./gradlew dynamicBundle:testDUT</span><br><span class="line">./gradlew dynamicDebug:testDUT</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>编译运行DynamicDebug出现异常如下：</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">java.lang.IllegalStateException: Pre-packaged database has an invalid schema: dynamic_info(com.cloud.disk.bundle.dynamic.Dynamic).</span><br><span class="line">    Expected:</span><br><span class="line">   TableInfo&#123;name=&apos;dynamic_info&apos;, columns=&#123;date=Column&#123;name=&apos;date&apos;, type=&apos;INTEGER&apos;, affinity=&apos;3&apos;, notNull=true, primaryKeyPosition=0, defaultValue=&apos;null&apos;&#125;, content=Column&#123;name=&apos;content&apos;, type=&apos;TEXT&apos;, affinity=&apos;2&apos;, notNull=true, primaryKeyPosition=0, defaultValue=&apos;null&apos;&#125;, id=Column&#123;name=&apos;id&apos;, type=&apos;INTEGER&apos;, affinity=&apos;3&apos;, notNull=true, primaryKeyPosition=1, defaultValue=&apos;null&apos;&#125;&#125;, foreignKeys=[], indices=[]&#125;</span><br><span class="line">    Found:</span><br><span class="line">   TableInfo&#123;name=&apos;dynamic_info&apos;, columns=&#123;date=Column&#123;name=&apos;date&apos;, type=&apos;LONG&apos;, affinity=&apos;1&apos;, notNull=false, primaryKeyPosition=0, defaultValue=&apos;null&apos;&#125;, id=Column&#123;name=&apos;id&apos;, type=&apos;INTEGER&apos;, affinity=&apos;3&apos;, notNull=false, primaryKeyPosition=1, defaultValue=&apos;null&apos;&#125;, content=Column&#123;name=&apos;content&apos;, type=&apos;VARCHAR(1024)&apos;, affinity=&apos;2&apos;, notNull=false, primaryKeyPosition=0, defaultValue=&apos;null&apos;&#125;&#125;, foreignKeys=[], indices=[]&#125;</span><br><span class="line">       at androidx.room.RoomOpenHelper.checkIdentity(RoomOpenHelper.java:163)</span><br></pre></td></tr></table></figure>
+<p>这是因为我们在测试阶段运行在JVM的环境上，没有提前发现数据迁移的问题。这里我们需要使用ROOM的Migration机制进行数据备份迁移。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">private val MIGRATION_1_2 = object : Migration(1, 2) &#123;</span><br><span class="line">      override fun migrate(database: SupportSQLiteDatabase) &#123;</span><br><span class="line">          database.execSQL(&quot;ALTER TABLE dynamic_info RENAME TO dynamic_info_back_up&quot;)</span><br><span class="line">          database.execSQL(&quot;CREATE TABLE dynamic_info ( id  INTEGER PRIMARY KEY NOT NULL, content TEXT NOT NULL,date INTEGER NOT NULL)&quot;)</span><br><span class="line">          database.execSQL(&quot;INSERT INTO dynamic_info (id, content,date) SELECT id, content,date FROM dynamic_info_back_up&quot;)</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  private val db = Room.databaseBuilder(</span><br><span class="line">          mContext,</span><br><span class="line">          AppDatabase::class.java, &quot;dynamic.db&quot;</span><br><span class="line">  ).addMigrations(MIGRATION_1_2).build()</span><br></pre></td></tr></table></figure>
+<p>更多迁移及测试见<a href="https://developer.android.google.cn/training/data-storage/room/migrating-db-versions" target="_blank" rel="noopener">迁移 Room 数据库</a>、<a href="https://developer.android.google.cn/training/data-storage/room/sqlite-room-migration" target="_blank" rel="noopener">从SQlite迁移到Room</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇我们分享了动态模块数据库从Sqlite迁移至Room的过程，使用框架节省编写大量的模版代码，易于维护及扩展。</p>
+<p>前面CloudDisk团队已经拆分成了多仓库开发，但各个模块各自维护了第三方库。除了版本不统一、也导致打包构建时会带入多个版本的三方库。</p>
+<p>下一篇，移动应用遗留系统重构（16）- Gradle依赖管理篇。我们将继续对CloudDisk的Gradle版本进行统一管理演示。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<p><a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6977702335879315493" target="_blank" rel="noopener">移动应用遗留系统重构（14）- Kotlin+MVVM重构示例篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/06/24/移动应用遗留系统重构（14）-Kotlin-MVVM重构示例篇/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2124,242 +2323,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/" itemprop="url">
-                  移动应用遗留系统重构（5）- 重构方法篇
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-18T08:50:51+08:00">
-                2021-04-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/04/18/移动应用遗留系统重构（5）-重构方法篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/04/18/移动应用遗留系统重构（5）-重构方法篇/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a>我们根据CloudDisk未来的架构，借助ArchUnit进行架构测试守护以及Intellij的Dependendencies分析出了按照未来的架构设计需要解决的异常依赖。</p>
-<p>这一篇开始我们将分享进行依赖解除的重构流程、方法以及常用的工具使用。</p>
-<h1 id="重构流程"><a href="#重构流程" class="headerlink" title="重构流程"></a>重构流程</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1.识别一个内聚的包</span><br><span class="line"></span><br><span class="line">2.解除该包的异常依赖</span><br><span class="line"></span><br><span class="line">3.移动该包对应的代码及资源到新的模块</span><br><span class="line"></span><br><span class="line">4.包解耦验收</span><br></pre></td></tr></table></figure>
-<h2 id="1-识别内聚的包"><a href="#1-识别内聚的包" class="headerlink" title="1.识别内聚的包"></a>1.识别内聚的包</h2><p>对于移动应用通常我们可以通过产品的业务划分进行领域的识别划分。例如CloudDisk这个产品的相对还是比较清晰，业务上主要分为文件、动态及个人中心。</p>
-<p>对于部分遗留系统来说，旧代码可能散落在不同的包下，或者原先的代码组织方式是以功能划分，而非业务划分。就像CloudDisk的代码一样，第一步我们得先把相关的业务代码组织到同一包下，这个阶段我们可以先不管是否存在异常依赖，因为只有先组织到一个内聚的包下才方便我们进行依赖分析及代码重构。</p>
-<h2 id="2-解除异常依赖"><a href="#2-解除异常依赖" class="headerlink" title="2.解除异常依赖"></a>2.解除异常依赖</h2><p>这里我们将介绍几种通用的依赖解除手法。包含下沉、接口提取、路由跳转。</p>
-<blockquote>
-<p>后续的演示篇会通过视频进行具体的操作演示</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>依赖解除手法</th>
-<th>使用场景</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>下沉</td>
-<td>原本类功能属于Library或者Platform的，直接下沉。例如LogUtil 或 DateUtil等</td>
-</tr>
-<tr>
-<td>接口提取</td>
-<td>适用于Bundle间有数据或者行为依赖。例如某个BundleA中的classA需要触发BundleB的某个业务行为</td>
-</tr>
-<tr>
-<td>路由跳转</td>
-<td>适用于UI页面间跳转。例如某个BundleA中的Activity1，需要跳转到BundleB的Activity2</td>
-</tr>
-</tbody>
-</table>
-<p><strong>重构手法：</strong></p>
-<ol>
-<li><strong>类下沉</strong> </li>
-</ol>
-<ul>
-<li>将<code>具体类</code>移动到适当的 Lib 模块中</li>
-<li>在调用模块增加对该 Lib 的依赖</li>
-</ul>
-<ol start="2">
-<li><strong>接口提取</strong><ul>
-<li>在适当的公用模块中创建空的<code>接口</code></li>
-<li>将调用具体页面类的跳转代码块所在的包中建立新的<code>实现类</code>实现该<code>接口</code></li>
-</ul>
-</li>
-</ol>
-<ul>
-<li><p>(自动)将<code>调用代码块</code>通过 Extract method 提取成<code>新方法</code></p>
-<blockquote>
-<p>如已经是独立方法跳过此步</p>
-</blockquote>
-</li>
-<li><p>(自动)在原调用逻辑所属的类中增加<code>实现类</code>的<code>成员变量</code>作为<code>delegate</code></p>
-<blockquote>
-<p>需要预留 Inject 接口，建议采用 Constructor Inject，静态成员提供setter</p>
-</blockquote>
-</li>
-<li><p>(自动)将<code>新方法</code>调用转移到<code>delegate</code>中</p>
-<blockquote>
-<p>如果是静态方法先通过 Change Method Signature 将 delegate 作为参数传给该方法</p>
-</blockquote>
-</li>
-<li><p>(自动)将新方法 Pull up 到<code>接口</code>中</p>
-</li>
-<li>(自动)将<code>实现类</code>移动到壳程序中</li>
-<li>在壳程序中实现<code>实现类</code>的Inject</li>
-</ul>
-<ol start="3">
-<li><strong>路由跳转</strong></li>
-</ol>
-<ul>
-<li>在跳转类定义对应的映射Path</li>
-<li>在调用处使用对应的path进行跳转</li>
-</ul>
-<h2 id="3-移动代码及资源"><a href="#3-移动代码及资源" class="headerlink" title="3.移动代码及资源"></a>3.移动代码及资源</h2><p>当包的异常依赖全部解耦完后，就可以直接进行移动了。这里我们分享2中常用的代码移动方式。</p>
-<ol>
-<li><strong>Move</strong></li>
-</ol>
-<p>这种方式大家应该比较常用，选择一个File或者Directory,按下F6选择希望移动后的目录则可。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB5cdbae60ad06e48c162daea4c2ec67a0?method=download&amp;shareKey=86221f4a888a290a536fae0cf8a5fdad" alt=""></p>
-<p>但是这种方式会存在一个问题，就是被移动的类如果依赖了其他的类或者资源，移动后会出现依赖异常。</p>
-<p><strong>适用场景：移动的File或Directory没有其他的依赖</strong></p>
-<ol start="2">
-<li><strong>Modularize</strong></li>
-</ol>
-<p>Modularize能够分析出移动的File存在的相关依赖，并一起关联移动，很好解决Move的痛点，非常适用于跨Module的移动。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEBd6578433db455117f8b9317dfa0171c7?method=download&amp;shareKey=999e7d9deab31cbd4562189c369a01a1" alt=""></p>
-<p>选择移动的Module后点击Preview。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB9e7ee54a39b6fa8e614b6b98b366270f?method=download&amp;shareKey=6670722db39275f644012b7f0712c857" alt=""></p>
-<p>这里注意，有一些划线的文件，那是因为这个文件同时被多处引用，如果跟随一起移动，那么其他的地方会报错。所以我们需要将划线的文件先移动至公用的合适位置。待Preview没有任何的文件划线时，就可以进行移动。</p>
-<h2 id="4-包解耦验收"><a href="#4-包解耦验收" class="headerlink" title="4.包解耦验收"></a>4.包解耦验收</h2><ul>
-<li>所有模块编译通过</li>
-<li>所有新增模块符合模块依赖规则</li>
-<li>通过架构守护测试</li>
-</ul>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这一篇我们分享了进行依赖解除的重构流程，主要为4个操作步骤，识别内聚包、解除依赖、移动、验收。同时也介绍了Intellij中非常好用的Modularize功能。接下来我们就可以开始动手进行代码重构，但此时我们又面临着另外一个问题，也是很多同学在做重构时经常担心的一个问题。<strong>重构时如何保证功能的正确性，不会修改出新问题。</strong></p>
-<p>下一篇移动应用遗留系统重构（6）- 测试篇，我们将分享对于单体移动应用遗留系统，如何制定测试策略及有效补充自动化测试，更好为重构保驾护航。</p>
-<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
-<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
-<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
-<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
-<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
-<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
-<ul>
-<li>作者：黄俊彬 </li>
-<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
-<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
-<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2407,7 +2370,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">96</span>
+                <span class="site-state-item-count">97</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
