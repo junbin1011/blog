@@ -1,0 +1,773 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="遗留系统重构,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="前言上一篇移动应用遗留系统重构（15）- 数据库重构示例篇我们提到CloudDisk团队已经拆分成了多仓库开发，但各个模块各自维护了第三方库。除了版本不统一、也导致打包构建时会带入多个版本的三方库。 由于目前各业务模块已经分仓开发，我们无法ext.的声明，统一版本号及定义库别名。我们只能以Gradle插件的形式发布到Maven库中，这样所有其他模块就可以直接apply使用。 CloudDisk G">
+<meta name="keywords" content="遗留系统重构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动应用遗留系统重构（16）- Gradle依赖管理篇">
+<meta property="og:url" content="https://junbin1011.github.io/2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/index.html">
+<meta property="og:site_name" content="JunBin">
+<meta property="og:description" content="前言上一篇移动应用遗留系统重构（15）- 数据库重构示例篇我们提到CloudDisk团队已经拆分成了多仓库开发，但各个模块各自维护了第三方库。除了版本不统一、也导致打包构建时会带入多个版本的三方库。 由于目前各业务模块已经分仓开发，我们无法ext.的声明，统一版本号及定义库别名。我们只能以Gradle插件的形式发布到Maven库中，这样所有其他模块就可以直接apply使用。 CloudDisk G">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
+<meta property="og:updated_time" content="2021-07-04T12:20:50.292Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动应用遗留系统重构（16）- Gradle依赖管理篇">
+<meta name="twitter:description" content="前言上一篇移动应用遗留系统重构（15）- 数据库重构示例篇我们提到CloudDisk团队已经拆分成了多仓库开发，但各个模块各自维护了第三方库。除了版本不统一、也导致打包构建时会带入多个版本的三方库。 由于目前各业务模块已经分仓开发，我们无法ext.的声明，统一版本号及定义库别名。我们只能以Gradle插件的形式发布到Maven库中，这样所有其他模块就可以直接apply使用。 CloudDisk G">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&shareKey=fd4babce2b0d344869bb1b2f7042417d">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://junbin1011.github.io/2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/">
+
+
+
+
+
+  <title> 移动应用遗留系统重构（16）- Gradle依赖管理篇 | JunBin </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b3ffb4912eee79c795100275f268095c";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JunBin</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">一花一世界，一码一浮生</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                移动应用遗留系统重构（16）- Gradle依赖管理篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-07-04T20:19:55+08:00">
+                2021-07-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6979198588630859806" target="_blank" rel="noopener">移动应用遗留系统重构（15）- 数据库重构示例篇</a>我们提到CloudDisk团队已经拆分成了多仓库开发，但各个模块各自维护了第三方库。除了版本不统一、也导致打包构建时会带入多个版本的三方库。</p>
+<p>由于目前各业务模块已经分仓开发，我们无法ext.的声明，统一版本号及定义库别名。我们只能以Gradle插件的形式发布到Maven库中，这样所有其他模块就可以直接apply使用。</p>
+<h1 id="CloudDisk-Gradle-插件改造"><a href="#CloudDisk-Gradle-插件改造" class="headerlink" title="CloudDisk Gradle 插件改造"></a>CloudDisk Gradle 插件改造</h1><h2 id="Gradle-插件"><a href="#Gradle-插件" class="headerlink" title="Gradle 插件"></a>Gradle 插件</h2><ol>
+<li>创建buildSrc模块</li>
+<li>创建BasePlugin类及LibPluginExtension</li>
+<li>创建resource/META-INF/gradle-plugin/com.cloud.disk.plugin.properties,声明class<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">implementation-class=com.cloud.disk.plugin.BasePlugin</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>4.发布插件，在使用的工程apply<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apply plugin: &apos;com.cloud.disk.plugin&apos;</span><br></pre></td></tr></table></figure></p>
+<p>BasePlugin类如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class BasePlugin implements Plugin&lt;Project&gt; &#123;</span><br><span class="line"></span><br><span class="line">    public static Project mProject</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    void apply(Project project) &#123;</span><br><span class="line">        mProject=project</span><br><span class="line">        project.extensions.create(&quot;Lib&quot;, LibPluginExtension.class)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>LibPluginExtension类如下,部分代码省略：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">public class LibPluginExtension &#123;</span><br><span class="line">    String roomVersion = &apos;2.2.6&apos;</span><br><span class="line">    String lifeCycleVersion = &apos;2.3.0&apos;</span><br><span class="line">    String hiltVersion = &apos;2.31.2-alpha&apos;</span><br><span class="line">    //... ...</span><br><span class="line"></span><br><span class="line">    void test() &#123;</span><br><span class="line">        BasePlugin.mProject.dependencies &#123;</span><br><span class="line">            testImplementation &quot;junit:junit:$junitVersion&quot;</span><br><span class="line">            testImplementation &quot;org.mockito:mockito-inline:$mockitoVersion&quot;</span><br><span class="line">            testImplementation &quot;android.arch.core:core-testing:1.1.1&quot;</span><br><span class="line">            testImplementation &quot;com.google.truth:truth:1.0.1&quot;</span><br><span class="line">            testImplementation &apos;com.tngtech.archunit:archunit-junit4:0.15.0&apos;</span><br><span class="line">            testImplementation &quot;org.robolectric:robolectric:$robolectricVersion&quot;</span><br><span class="line">            testImplementation &apos;androidx.test:core:1.3.0&apos;</span><br><span class="line">            testImplementation &apos;androidx.test.ext:junit:1.1.2&apos;</span><br><span class="line">            testImplementation &quot;androidx.test.espresso:espresso-core:$espressoVersion&quot;</span><br><span class="line">            testImplementation &quot;androidx.test.espresso:espresso-intents:$espressoVersion&quot;</span><br><span class="line">            debugImplementation &quot;androidx.fragment:fragment-testing:1.3.1&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    void room() &#123;</span><br><span class="line">        BasePlugin.mProject.dependencies &#123;</span><br><span class="line">            implementation &quot;androidx.room:room-runtime:$roomVersion&quot;</span><br><span class="line">            implementation &quot;androidx.room:room-ktx:$roomVersion&quot;</span><br><span class="line">            kapt &quot;androidx.room:room-compiler:$roomVersion&quot;</span><br><span class="line">            testImplementation &quot;androidx.room:room-testing:$roomVersion&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    void coroutines() &#123;</span><br><span class="line">        BasePlugin.mProject.dependencies &#123;</span><br><span class="line">            implementation &quot;org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion&quot;</span><br><span class="line">            implementation &quot;org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion&quot;</span><br><span class="line">            testImplementation &quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.3&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">     </span><br><span class="line">    // ... ...</span><br><span class="line"></span><br><span class="line">   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="CloudDisk-改造"><a href="#CloudDisk-改造" class="headerlink" title="CloudDisk 改造"></a>CloudDisk 改造</h2><ol>
+<li><p>dynamicBundle模块修改如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">    implementation &apos;com.cloud.disk:api:1.0.0&apos;</span><br><span class="line">    implementation &apos;com.cloud.disk:library:1.0.0&apos;</span><br><span class="line">    implementation &apos;com.cloud.disk:platform:1.0.0&apos;</span><br><span class="line"></span><br><span class="line">    project.Lib.kotlin()</span><br><span class="line">    project.Lib.supportV4()</span><br><span class="line">    project.Lib.appCompact()</span><br><span class="line">    project.Lib.material()</span><br><span class="line">    project.Lib.router()</span><br><span class="line">    project.Lib.mvvm()</span><br><span class="line">    project.Lib.ktx()</span><br><span class="line">    project.Lib.coroutines()</span><br><span class="line">    project.Lib.room()</span><br><span class="line">    project.Lib.hilt()</span><br><span class="line">    project.Lib.test()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>dynamicDebug模块修改如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">    implementation &apos;com.cloud.disk:api:1.0.0&apos;</span><br><span class="line">    implementation project(&apos;:dynamicBundle&apos;)</span><br><span class="line"></span><br><span class="line">    project.Lib.hilt()</span><br><span class="line">    project.Lib.test()</span><br><span class="line">    project.Lib.appCompact()</span><br><span class="line">    project.Lib.material()</span><br><span class="line">    project.Lib.constraintlayout()</span><br><span class="line">    project.Lib.kotlin()</span><br><span class="line">    project.Lib.ktx()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>完整修改见<a href="https://github.com/junbin1011/CloudDisk/commit/8e1b7a8c228ecad2b6a1b14deba824cfe9cd80e4" target="_blank" rel="noopener">Github</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇主要分享了 CloudDisk Gradle 插件改造，统一的三方库的版本管理及简化依赖调用，有效的解决了三方库版本不统一问题。</p>
+<p>随着重构工作的持续，各个模块已经补充了足量的自动化测试，但CloudDisk团队目前的CI只提供打包的功能，供测试团队进行验证。分仓以后也没有对独立模块仓库建立流水线，测试团队还是只能在最后做集成的验收。</p>
+<p>下一篇，移动应用遗留系统重构（17）- 流水线设计篇。我们将重新对CloudDisk进行流水线的设计，必须满足质量门禁检查及根据模块、集成，制定对应的策略。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<p><a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6977702335879315493" target="_blank" rel="noopener">移动应用遗留系统重构（14）- Kotlin+MVVM重构示例篇</a></p>
+<p><a href="https://juejin.cn/post/6979198588630859806" target="_blank" rel="noopener">移动应用遗留系统重构（15）- 数据库重构示例篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/遗留系统重构/" rel="tag"># 遗留系统重构</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/06/29/移动应用遗留系统重构（15）-数据库重构示例篇/" rel="next" title="移动应用遗留系统重构（15）- 数据库重构示例篇">
+                <i class="fa fa-chevron-left"></i> 移动应用遗留系统重构（15）- 数据库重构示例篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/" data-title="移动应用遗留系统重构（16）- Gradle依赖管理篇" data-url="https://junbin1011.github.io/2021/07/04/移动应用遗留系统重构（16）-Gradle依赖管理篇/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f" alt="黄俊彬">
+          <p class="site-author-name" itemprop="name">黄俊彬</p>
+           
+              <p class="site-description motion-element" itemprop="description">一花一世界，一码一浮生</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">98</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junbin1011" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" title="zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CloudDisk-Gradle-插件改造"><span class="nav-number">2.</span> <span class="nav-text">CloudDisk Gradle 插件改造</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Gradle-插件"><span class="nav-number">2.1.</span> <span class="nav-text">Gradle 插件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CloudDisk-改造"><span class="nav-number">2.2.</span> <span class="nav-text">CloudDisk 改造</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CloudDisk示例代码"><span class="nav-number">4.</span> <span class="nav-text">CloudDisk示例代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#系列链接"><span class="nav-number">5.</span> <span class="nav-text">系列链接</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#大纲"><span class="nav-number">6.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于"><span class="nav-number">7.</span> <span class="nav-text">关于</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">黄俊彬</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"junbin"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
