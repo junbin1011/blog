@@ -271,6 +271,183 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/07/13/移动应用遗留系统重构（17）-流水线设计篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="黄俊彬">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JunBin">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2021/07/13/移动应用遗留系统重构（17）-流水线设计篇/" itemprop="url">
+                  移动应用遗留系统重构（17）-流水线设计篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-07-13T07:20:22+08:00">
+                2021-07-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/07/13/移动应用遗留系统重构（17）-流水线设计篇/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/07/13/移动应用遗留系统重构（17）-流水线设计篇/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6981044230038749220" target="_blank" rel="noopener">移动应用遗留系统重构（16）- Gradle依赖管理篇</a>我们提到随着重构工作的持续，各个模块已经补充了足量的自动化测试，但CloudDisk团队目前的CI只提供打包的功能，供测试团队进行验证。分仓以后也没有对独立模块仓库建立流水线，测试团队还是只能在最后做集成的验收。我们将重新对CloudDisk进行流水线的设计，必须满足质量门禁检查及根据模块、集成，制定对应的策略。</p>
+<h1 id="流水线"><a href="#流水线" class="headerlink" title="流水线"></a>流水线</h1><p><strong>流水线是从代码到产品的完整生命周期的可视化呈现，快速反馈产品的可交付状态，引导团队快速响应。</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A(代码提交)--&gt;B(质量门禁)</span><br><span class="line">B--&gt;C(构建)</span><br><span class="line">C--&gt;D(自动化测试)</span><br><span class="line">D--&gt;E(发布)</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>其中质量门禁通常包括代码规范检查、安全漏洞检查等；自动化测通过包过小型的单元测试、中型的接口测试等</p>
+</blockquote>
+<h2 id="质量门禁"><a href="#质量门禁" class="headerlink" title="质量门禁"></a>质量门禁</h2><p>统一使用<a href="https://sonarcloud.io/" target="_blank" rel="noopener">sonar</a>进行质量域管理,集成Lint、CheckStyle、Findbugs、Jacoco。</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5925d66e0bce436e96940affee5b9ce8~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p>自动化测试包含单元测试、接口测试、验收UI测试、架构守护测试，并通过jacoco统计覆盖率上传至sonar。</p>
+<h2 id="组件流水线"><a href="#组件流水线" class="headerlink" title="组件流水线"></a>组件流水线</h2><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9ac5d748bb49433fbb9c2dd1fdf07ba9~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<ol>
+<li>业务平台成员提交代码后自动触发流水线检查</li>
+<li>Pre-review验证包含质量门禁检查、编译及自动化测试</li>
+<li>团队内架构师进行review后代码合入</li>
+<li>发布最新的组件版本到maven制品库</li>
+</ol>
+<h2 id="集成流水线"><a href="#集成流水线" class="headerlink" title="集成流水线"></a>集成流水线</h2><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0f834022d6694caabbe9cdee8ec0c4a9~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<ol>
+<li>产品团队根据版本规划，提交组件集成版本清单</li>
+<li>自动触发Pre-review验证包含质量门禁检查、编译及自动化测试</li>
+<li>团队内架构师进行review，产品经理进行确认后代码合入</li>
+<li>发布最新的应用版本到制品库</li>
+<li>团队确认后选择渠道(内测、灰度、应用市场、全量)进行发布</li>
+</ol>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇我们分享了CloudDisk团队的新流水线设计，增加了质量门禁，提高代码入库质量。同时也为组件设计了流水线，方便快速反馈对组件进行测试验收。</p>
+<p>下一篇移动应用遗留系统重构（18）- 总结篇是本系列的最后一篇，我们将分享在实际项目中除了技术外的一些踩坑心得，并对整个系列进行总结回顾。</p>
+<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
+<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
+<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
+<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
+<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
+<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
+<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
+<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
+<p><a href="https://juejin.cn/post/6963214120178941983" target="_blank" rel="noopener">移动应用遗留系统重构（8）- 依赖注入篇</a></p>
+<p><a href="https://juejin.cn/post/6966166367821103117" target="_blank" rel="noopener">移动应用遗留系统重构（9）- 路由篇</a></p>
+<p><a href="https://juejin.cn/post/6970870458660945934" target="_blank" rel="noopener">移动应用遗留系统重构（10）- 解耦重构演示篇（二）</a></p>
+<p><a href="https://juejin.cn/post/6973836199655899149" target="_blank" rel="noopener">移动应用遗留系统重构（11）- 制品管理篇</a></p>
+<p><a href="https://juejin.cn/post/6974634615537401886" target="_blank" rel="noopener">移动应用遗留系统重构（12）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6975877150314332168" target="_blank" rel="noopener">移动应用遗留系统重构（13）- 编译调试篇</a></p>
+<p><a href="https://juejin.cn/post/6977702335879315493" target="_blank" rel="noopener">移动应用遗留系统重构（14）- Kotlin+MVVM重构示例篇</a></p>
+<p><a href="https://juejin.cn/post/6979198588630859806" target="_blank" rel="noopener">移动应用遗留系统重构（15）- 数据库重构示例篇</a></p>
+<p><a href="https://juejin.cn/post/6981044230038749220" target="_blank" rel="noopener">移动应用遗留系统重构（16）- Gradle依赖管理篇</a></p>
+<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c436727f5f0f4e4db666e3e63fb8363a~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><ul>
+<li>作者：黄俊彬 </li>
+<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
+<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
+<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/07/05/每天写代码，如何瘦身34斤？/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2025,222 +2202,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://junbin1011.github.io/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="黄俊彬">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="https://note.youdao.com/yws/api/personal/file/WEB917b08143504a6f8c96228312fcb5245?method=download&shareKey=03cb5c302c83b56bbb91668c5008444f">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JunBin">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/" itemprop="url">
-                  移动应用遗留系统重构（8）- 依赖注入篇
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-17T20:43:08+08:00">
-                2021-05-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/05/17/移动应用遗留系统重构（8）-依赖注入篇/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇<a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)</a>我们对file包进行了重构，抽取了对应的UserState接口，但我们发现UserState接口的层层传递，我们需要手工维护好多的构造方法及对应的注入，这样非常不便于进行代码的管理及维护。同时随着解耦的接口越来越多，就会产生更多的样板代码，所以我们需要更好的方式进行统一的管理。</p>
-<p>这篇我们主要分为3个部分，第一部分是常见依赖注入方式，第二部分是业内优秀的依赖注入实践，最后我们将继续对CloudDisk进行依赖注入的重构。</p>
-<h1 id="依赖注入方式"><a href="#依赖注入方式" class="headerlink" title="依赖注入方式"></a>依赖注入方式</h1><h2 id="静态注入（在编译时连接依赖项的代码）"><a href="#静态注入（在编译时连接依赖项的代码）" class="headerlink" title="静态注入（在编译时连接依赖项的代码）"></a>静态注入（在编译时连接依赖项的代码）</h2><p>静态注入是最常用的方式，在类中依赖抽象，暴露接缝，在调用的地方进行实现的注入。常用的注入方式有2种。</p>
-<ol>
-<li><p>构造函数注入。您将某个类的依赖项传入其构造函数（上一篇的CloudDisk就是采用这种方式）。</p>
-</li>
-<li><p>字段注入（或 setter 注入）。某些 Android 框架类（如 Activity 和 Fragment）由系统实例化，因此无法进行构造函数注入。使用字段注入时，依赖项将在创建类后实例化</p>
-</li>
-</ol>
-<p>由于是编译时连接依赖项，所以编辑阶段会进行类型的检查。</p>
-<h2 id="动态注入-（在运行时连接依赖项）"><a href="#动态注入-（在运行时连接依赖项）" class="headerlink" title="动态注入 （在运行时连接依赖项）"></a>动态注入 （在运行时连接依赖项）</h2><p>动态注入最常见的方式就是通过反射的机制，在运行时进行注入。</p>
-<p>由于是运行时连接依赖项，所以编译阶段没有检查，且有反射带来的性能问题。但好处是灵活，如果有模块是动态加载的，利用这种方式处理起来更简单。</p>
-<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><table>
-<thead>
-<tr>
-<th>静态注入</th>
-<th>动态注入</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>类型安全，编译时检查</td>
-<td>运行时绑定，编译时没有依赖</td>
-</tr>
-<tr>
-<td>性能无损失</td>
-<td>有反射带来的性能损失</td>
-</tr>
-<tr>
-<td>较适合整包编译</td>
-<td>较适合模块动态加载场景</td>
-</tr>
-<tr>
-<td>开源实现多</td>
-<td>开源实现较少</td>
-</tr>
-</tbody>
-</table>
-<h1 id="业内优秀实践"><a href="#业内优秀实践" class="headerlink" title="业内优秀实践"></a>业内优秀实践</h1><p>前面提到适用手工的方式进行依赖注入的管理，是一项非常困难和有挑战的事情。所幸，业内已经有成熟的解决方案。这一章我们来看下业内优秀的实践。</p>
-<h2 id="hilt"><a href="#hilt" class="headerlink" title="hilt"></a><a href="https://developer.android.com/training/dependency-injection" target="_blank" rel="noopener">hilt</a></h2><p>Hilt 采用的是静态注入的方式，在依赖项注入库<a href="https://dagger.dev/" target="_blank" rel="noopener">Dagger</a> 的基础上构建而成，提供了一种将 Dagger 纳入 Android 应用的标准方法。</p>
-<p>详细的介绍及使用大家可以查看官方的介绍说明</p>
-<p><a href="https://developer.android.com/training/dependency-injection/hilt-android" target="_blank" rel="noopener">https://developer.android.com/training/dependency-injection/hilt-android</a></p>
-<p>这里我们重点分享几点这个库的一些优点。</p>
-<ol>
-<li>相比Dragger，使用其实更简单</li>
-<li>IDE支持链接跳转，开发体验好</li>
-<li>完整的测试套件，方便进行自动化测试编写</li>
-<li>Jetpack生态组件，生态链完整，社区活跃度搞</li>
-</ol>
-<h2 id="koin"><a href="#koin" class="headerlink" title="koin"></a><a href="https://insert-koin.io/" target="_blank" rel="noopener">koin</a></h2><p>Koin 是一个用于 Kotlin 的实用型轻量级依赖注入框架，采用纯 Kotlin 编写而成，仅使用功能解析，无代理、无代码生成、无反射。</p>
-<p>详细的介绍及使用同样大家可以查看官方的介绍说明</p>
-<p><a href="https://insert-koin.io/docs/quickstart/kotlin" target="_blank" rel="noopener">https://insert-koin.io/docs/quickstart/kotlin</a></p>
-<p>这里我们同样分享几点这个库的一些优点。</p>
-<ol>
-<li>使用简单，没有复杂的注解</li>
-<li>更轻量，相比hilt编译时间更快、生成代码更少</li>
-</ol>
-<p>当然，由于koin本身是用kotlin语言编写的，所以最好项目也是使用kotlin编写。相比hilt，没有那么细的生命周期管理以及IDE的支持，并且也没有Jetpack的生态丰富。</p>
-<h1 id="CloudDisk依赖注入重构示例"><a href="#CloudDisk依赖注入重构示例" class="headerlink" title="CloudDisk依赖注入重构示例"></a>CloudDisk依赖注入重构示例</h1><p>前面我们分享了业内一些优秀的依赖注入实践，由于CloudDisk是采用java语言开发，且考虑后续会往JetPack生态迁移，所以决定采用Hilt的方案。</p>
-<p>具体的Hilt改造过程我们就不演示，<a href="https://developer.android.com/training/dependency-injection/hilt-android" target="_blank" rel="noopener">参考官网的文档</a>进行操作则可。这里我们对比一下改造前后的代码片段。</p>
-<p>具体的代码：<a href="https://github.com/junbin1011/CloudDisk/commit/5a0cbec49216c7ab43e88a2ebbed51f549f90cfd" target="_blank" rel="noopener">github链接</a></p>
-<p>使用手工注入：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class FileFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    FileController fileController;</span><br><span class="line"></span><br><span class="line">    public FileFragment(UserState userState) &#123;</span><br><span class="line">        fileController = new FileController(userState);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static FileFragment newInstance(UserState userState) &#123;</span><br><span class="line">        FileFragment fragment = new FileFragment(userState);</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>使用Hilt注入：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@AndroidEntryPoint</span><br><span class="line">public class FileFragment extends Fragment &#123;</span><br><span class="line"></span><br><span class="line">    @Inject</span><br><span class="line">    FileController fileController;</span><br><span class="line"></span><br><span class="line">    public static FileFragment newInstance() &#123;</span><br><span class="line">        FileFragment fragment = new FileFragment();</span><br><span class="line">        Bundle args = new Bundle();</span><br><span class="line">        fragment.setArguments(args);</span><br><span class="line">        return fragment;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>Hilt本质上通过注解及gradle插件，在编译时生成代码及注入到我们的类中。使用框架帮我们减少了很多模板代码，统一配置管理。</p>
-</blockquote>
-<p>这里注意，测试代码也需要做相应的配置。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@RunWith(AndroidJUnit4.class)</span><br><span class="line">@LargeTest</span><br><span class="line">@HiltAndroidTest</span><br><span class="line">@Config(application = HiltTestApplication.class)</span><br><span class="line">public class SmokeTesting &#123;</span><br><span class="line">    @Rule</span><br><span class="line">    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本章我们介绍了常见的依赖注入方式及业内优秀的实践，同时我们也将CloudDisk进行了改造，使用Hilt统一管理注入。通过IDE的依赖分析我们可以发现，App依赖了fileBundle的Fragment，UI上存在编译的依赖。</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB2edad8a59550acde5eea949d50cf8473?method=download&amp;shareKey=1b45b7b5c8e0a566f5f419d70654a673" alt=""></p>
-<p>下一篇，移动应用遗留系统重构（9）- 路由篇，我们将分享常见的页面路由方式及业内优秀的实践，并对DiskCloud继续进行改造优化。</p>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a href="https://developer.android.com/training/dependency-injection" target="_blank" rel="noopener">Android 中的依赖项注入</a></p>
-<h1 id="CloudDisk示例代码"><a href="#CloudDisk示例代码" class="headerlink" title="CloudDisk示例代码"></a>CloudDisk示例代码</h1><p><a href="https://github.com/junbin1011/CloudDisk" target="_blank" rel="noopener">CloudDisk</a></p>
-<h1 id="系列链接"><a href="#系列链接" class="headerlink" title="系列链接"></a>系列链接</h1><p><a href="https://juejin.cn/post/6943470229905211422" target="_blank" rel="noopener">移动应用遗留系统重构（1）- 开篇</a></p>
-<p><a href="https://juejin.cn/post/6945313969556946980" target="_blank" rel="noopener">移动应用遗留系统重构（2）-架构篇</a></p>
-<p><a href="https://juejin.cn/post/6947855094272491556" target="_blank" rel="noopener">移动应用遗留系统重构（3）-示例篇</a></p>
-<p><a href="https://juejin.cn/post/6950077521790500894" target="_blank" rel="noopener">移动应用遗留系统重构（4）-分析篇</a></p>
-<p><a href="https://juejin.cn/post/6952298178095874055" target="_blank" rel="noopener">移动应用遗留系统重构（5）- 重构方法篇</a></p>
-<p><a href="https://juejin.cn/post/6954635678982340622" target="_blank" rel="noopener">移动应用遗留系统重构（6）- 测试篇</a></p>
-<p><a href="https://juejin.cn/post/6959504791642832909" target="_blank" rel="noopener">移动应用遗留系统重构（7）- 解耦重构演示篇(一)+视频演示</a></p>
-<h1 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h1><p><img src="https://note.youdao.com/yws/api/personal/file/WEBf483992c4f5299577eeb0c039992c8d6?method=download&amp;shareKey=fd4babce2b0d344869bb1b2f7042417d" alt=""></p>
-<h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1><p><strong>欢迎关注CAC敏捷教练公众号</strong>。微信搜索：<strong>CAC敏捷教练</strong>。</p>
-<ul>
-<li>作者：黄俊彬 </li>
-<li><a href="https://junbin.tech/" target="_blank" rel="noopener">博客：junbin.tech</a></li>
-<li><a href="https://github.com/junbin1011" target="_blank" rel="noopener">GitHub: junbin1011 </a></li>
-<li><a href="https://www.zhihu.com/people/junbin-9-77" target="_blank" rel="noopener">知乎: @JunBin</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2288,7 +2249,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">99</span>
+                <span class="site-state-item-count">100</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
